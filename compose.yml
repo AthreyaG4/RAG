@@ -1,0 +1,38 @@
+services:
+  database:
+    image: postgres:18-alpine
+    container_name: db
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=database
+    networks:
+      - backend
+  pgweb:
+    container_name: pgweb
+    restart: always
+    image: sosedoff/pgweb
+    ports:
+      - "8081:8081"
+    networks:
+      - backend
+
+  api:
+    build: .
+    tty: true
+    ports:
+      - "5000:5000"
+    networks:
+      - backend
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+
+volumes:
+  postgres-data:
+
+networks:
+  backend:
