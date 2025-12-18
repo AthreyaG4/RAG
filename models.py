@@ -14,6 +14,7 @@ class User(Base):
     username = Column(String, unique=True, nullable=False)
     password_hash = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+    email = Column(String, unique=True, nullable=False)
 
     projects = relationship("Project", back_populates="user")
 
@@ -29,6 +30,7 @@ class Project(Base):
 
     user = relationship("User", back_populates="projects")
     documents = relationship("Document", back_populates="project")
+    messages = relationship("Message", back_populates="project")
 
 class Document(Base):
     __tablename__ = "documents"
@@ -41,3 +43,27 @@ class Document(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     project = relationship("Project", back_populates="documents")
+    chunks = relationship("Chunk", back_populates="document")
+
+class Chunk(Base):
+    __tablename__ = "chunks"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    content = Column(String, nullable=False)
+
+    document_id = Column(UUID(as_uuid=True), ForeignKey("documents.id"))
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    document = relationship("Document", back_populates="chunks")
+
+class Message(Base):
+    __tablename__ = "messages"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    role = Column(String, nullable=False)
+    content = Column(String, nullable=False)
+
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id"))
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    project = relationship("Project", back_populates="messages")
