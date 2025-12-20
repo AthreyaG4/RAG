@@ -5,3 +5,5 @@ sqlalchemy
 psycopg2-binary
 pyjwt
 pwdlib[argon2]
+python-multipart
+boto3

@@ -62,7 +62,7 @@ async def update_project(project_id: UUID,
     db.refresh(project)
     return project
 
-@route.delete("/{project_id}")
+@route.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_project(project_id: UUID,
                          current_user: User = Depends(get_current_active_user),
                          db: Session = Depends(get_db)):
@@ -73,4 +73,4 @@ async def delete_project(project_id: UUID,
 
     db.delete(project)
     db.commit()
-    return {"detail": "Project deleted successfully"}
+    return

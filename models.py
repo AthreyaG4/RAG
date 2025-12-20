@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, ForeignKey
+from sqlalchemy import Column, String, DateTime, ForeignKey, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -30,20 +30,20 @@ class Project(Base):
 
     user = relationship("User", back_populates="projects")
     documents = relationship("Document", back_populates="project", cascade="all, delete-orphan")
-    messages = relationship("Message", back_populates="project")
+    messages = relationship("Message", back_populates="project", cascade="all, delete-orphan")
 
 class Document(Base):
     __tablename__ = "documents"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     filename = Column(String, nullable=False)
-    status = Column(String, default="uploaded")
 
     project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
+    s3_key = Column(String, nullable = False)
 
     project = relationship("Project", back_populates="documents")
-    chunks = relationship("Chunk", back_populates="document")
+    chunks = relationship("Chunk", back_populates="document", cascade="all, delete-orphan")
 
 class Chunk(Base):
     __tablename__ = "chunks"

@@ -35,7 +35,6 @@ class UserResponse(BaseModel):
     username: str
     email: EmailStr
     created_at: datetime
-    projects: List["ProjectResponse"] = []
 
     class Config:
         from_attributes = True
@@ -46,7 +45,6 @@ class ProjectResponse(BaseModel):
     name: str
     status: str
     created_at: datetime
-    documents: List["DocumentResponse"] = []
     messages: List["MessageResponse"] = []
 
     class Config:
@@ -58,6 +56,7 @@ class DocumentResponse(BaseModel):
     filename: str
     created_at: datetime
     status: str = "uploaded"
+    s3_key: str
     chunks: List["ChunkResponse"] = []
 
     class Config:

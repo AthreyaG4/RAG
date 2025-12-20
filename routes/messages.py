@@ -18,7 +18,7 @@ async def list_messages(project_id: UUID,
 
     return db.query(Message).filter(Message.project_id == project_id).all()
 
-@route.post("/", response_model=MessageResponse)
+@route.post("/", response_model=list[MessageResponse])
 async def create_message(project_id: UUID,
                          message: MessageCreateRequest,
                          current_user: User = Depends(get_current_active_user),
@@ -28,12 +28,24 @@ async def create_message(project_id: UUID,
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
     
-    db_messages = Message(
-            role=message.role,
-            content=message.content,
-            project_id=project_id
-        )
+    user_message = Message(
+        role=message.role,
+        content=message.content,
+        project_id=project_id,
+    )
 
-    db.add(db_messages)
+    db.add(user_message)
     db.commit()
-    return db_messages
+    db.refresh(user_message)
+
+    assistant_message = Message(
+        role="assistant",
+        content="This is a placeholder LLM response.",
+        project_id=project_id,
+    )
+
+    db.add(assistant_message)
+    db.commit()
+    db.refresh(assistant_message)
+
+    return [user_message, assistant_message]
