@@ -7,3 +7,5 @@ pyjwt
 pwdlib[argon2]
 python-multipart
 boto3
+celery
+redis

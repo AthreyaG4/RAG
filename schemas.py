@@ -16,8 +16,8 @@ class JWTToken(BaseModel):
 class ProjectCreateRequest(BaseModel):
     name: str
 
-class DocumentCreateRequest(BaseModel):
-    filename: str
+# class DocumentCreateRequest(BaseModel):
+#     filename: str
 
 class ChunkCreateRequest(BaseModel):
     content: str
@@ -46,6 +46,7 @@ class ProjectResponse(BaseModel):
     status: str
     created_at: datetime
     messages: List["MessageResponse"] = []
+    task: "TaskResponse | None" = None
 
     class Config:
         from_attributes = True
@@ -55,8 +56,8 @@ class DocumentResponse(BaseModel):
     project_id: UUID
     filename: str
     created_at: datetime
-    status: str = "uploaded"
-    s3_key: str
+    status: str
+    s3_key: str | None = None
     chunks: List["ChunkResponse"] = []
 
     class Config:
@@ -80,3 +81,10 @@ class MessageResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class TaskResponse(BaseModel):
+    id: UUID
+    project_id: UUID
+    status: str
+    stage: str | None = None
+    progress: float

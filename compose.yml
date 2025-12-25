@@ -32,8 +32,40 @@ services:
     volumes:
       - ./:/app
 
+  celery-worker:
+    build: .
+    command: celery -A celery_app worker --loglevel=info
+    container_name: celery-worker
+    networks:
+      - backend
+    volumes:
+      - ./:/app
+    env_file:
+      - .env
+
+  redis:
+    container_name: redis-db
+    image: redis:8-alpine
+    networks:
+      - backend
+    volumes:
+      - redis-data:/data
+
+  redis-commander:
+    container_name: redis-commander
+    hostname: redis-commander
+    image: rediscommander/redis-commander:latest
+    restart: always
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8082:8081"
+    networks:
+      - backend
+
 volumes:
   postgres-data:
+  redis-data:
 
 networks:
   backend:
