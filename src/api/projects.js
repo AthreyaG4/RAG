@@ -18,6 +18,19 @@ export async function createProject(token, projectName) {
   return response.json();
 }
 
+export async function processProject(token, id) {
+  const response = await fetch(
+    `http://localhost:5000/api/projects/${id}/process`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+  return response.json();
+}
+
 export async function updateProject(token, id, updatedName) {
   const payload = { name: updatedName };
   const response = await fetch(`http://localhost:5000/api/projects/${id}`, {

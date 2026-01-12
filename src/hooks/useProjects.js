@@ -18,13 +18,11 @@ export function useProjects(token) {
     }
   };
 
-  // Initial fetch
   useEffect(() => {
     if (!token) return;
     fetchProjects();
   }, [token]);
 
-  // Poll only when there are processing projects
   useEffect(() => {
     if (!token) return;
 
@@ -36,7 +34,7 @@ export function useProjects(token) {
 
     const interval = setInterval(() => {
       fetchProjects();
-    }, 3000); // Check every 3 seconds when processing
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [token, projects]);
@@ -55,6 +53,15 @@ export function useProjects(token) {
     return updatedProject;
   }
 
+  async function processProject(id) {
+    // console.log(`Processing Project: ${id}.....`);
+    const processedProject = await api.processProject(token, id);
+    setProjects((prev) =>
+      prev.map((p) => (p.id === id ? processedProject : p)),
+    );
+    return processedProject;
+  }
+
   async function deleteProject(id) {
     // console.log(`Deleting Project: ${id}.....`);
     await api.deleteProject(token, id);
@@ -68,6 +75,7 @@ export function useProjects(token) {
     error,
     createProject,
     updateProject,
+    processProject,
     deleteProject,
   };
 }

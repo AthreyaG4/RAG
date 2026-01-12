@@ -27,11 +27,11 @@ export function DocumentUploadStatus({
   deleteDocument,
   onAllFilesRemoved,
 }) {
-  const successCount =
-    documents?.filter((doc) => doc.status === "success").length || 0;
+  const uploadedCount =
+    documents?.filter((doc) => doc.status === "uploaded").length || 0;
   const failedCount =
-    documents?.filter((doc) => doc.status === "error").length || 0;
-  const hasSuccessfulUploads = successCount > 0;
+    documents?.filter((doc) => doc.status === "failed").length || 0;
+  const hasuploadedfulUploads = uploadedCount > 0;
 
   const [documentToRemove, setDocumentToRemove] = useState(null);
 
@@ -42,15 +42,12 @@ export function DocumentUploadStatus({
   const confirmRemove = () => {
     if (!documentToRemove) return;
 
-    // Check if this is the last file
     const isLastFile = documents.length === 1;
 
-    // Call the parent's delete handler with document ID
     deleteDocument?.(documentToRemove.id);
 
     setDocumentToRemove(null);
 
-    // Call callback after removing the last file
     if (isLastFile) {
       onAllFilesRemoved?.();
     }
@@ -64,72 +61,80 @@ export function DocumentUploadStatus({
           isSidebarOpen ? "ml-0" : "ml-0",
         )}
       >
-        <div className="w-full max-w-2xl">
-          <div className="mb-8 text-center">
+        <div className="w-full max-w-xl">
+          {/* Header */}
+          <div className="mb-10 text-center">
+            <div className="bg-primary/10 mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl">
+              <FileText className="text-primary h-8 w-8" />
+            </div>
             <h2 className="text-foreground mb-2 text-2xl font-semibold">
-              Uploaded to {projectName}
+              {projectName}
             </h2>
-
-            <p className="text-muted-foreground">
-              {successCount} file{successCount !== 1 ? "s" : ""} uploaded
-              successfully
-              {failedCount > 0 && `, ${failedCount} failed`}
+            <p className="text-muted-foreground text-sm">
+              {uploadedCount} of {documents?.length || 0} file
+              {documents?.length !== 1 ? "s" : ""} ready
+              {failedCount > 0 && (
+                <span className="text-destructive">
+                  {" "}
+                  · {failedCount} failed
+                </span>
+              )}
             </p>
           </div>
 
-          <div className="bg-card border-border mb-6 rounded-xl border p-4">
-            <div className="max-h-100 space-y-2 overflow-y-auto">
+          {/* File List */}
+          <div className="bg-card/50 border-border/50 mb-6 overflow-hidden rounded-2xl border backdrop-blur-sm">
+            <div className="divide-border/50 max-h-80 divide-y overflow-y-auto">
               {documents?.map((doc) => {
                 const status = doc.status;
 
                 return (
                   <div
                     key={doc.id}
-                    className={cn(
-                      "flex w-[99%] items-center gap-3 rounded-lg p-3 transition-all",
-                      status === "error" &&
-                        "bg-destructive/5 border-destructive/20 border",
-                      status === "success" &&
-                        "border border-green-500/20 bg-green-500/5",
-                      !status && "bg-muted/50",
-                    )}
+                    className="hover:bg-muted/30 group flex items-center gap-3 px-4 py-3 transition-colors"
                   >
-                    <div className="shrink-0">
-                      {status === "success" && (
+                    {/* Status Icon */}
+                    <div
+                      className={cn(
+                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+                        status === "uploaded" && "bg-green-500/10",
+                        status === "failed" && "bg-destructive/10",
+                      )}
+                    >
+                      {status === "uploaded" && (
                         <CheckCircle2 className="h-4 w-4 text-green-500" />
                       )}
-                      {status === "error" && (
+                      {status === "failed" && (
                         <AlertCircle className="text-destructive h-4 w-4" />
-                      )}
-                      {!status && (
-                        <FileText className="text-muted-foreground h-4 w-4" />
                       )}
                     </div>
 
-                    <span className="text-foreground flex-1 truncate text-sm">
-                      {doc.filename}
-                    </span>
+                    {/* File Info */}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-foreground truncate text-sm font-medium">
+                        {doc.filename}
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        {doc.size ? `${(doc.size / 1024).toFixed(1)} KB` : ""}
+                      </p>
+                    </div>
 
-                    {status === "success" && (
-                      <span className="rounded-full border border-green-500/20 bg-green-500/10 px-2 py-0.5 text-xs text-green-600 dark:text-green-400">
-                        Uploaded
+                    {/* Status Badge */}
+                    {status === "uploaded" && (
+                      <span className="rounded-full bg-green-500/10 px-2 py-1 text-xs font-medium text-green-600 dark:text-green-400">
+                        Ready
                       </span>
                     )}
-                    {status === "error" && (
-                      <span className="bg-destructive/10 text-destructive border-destructive/20 rounded-full border px-2 py-0.5 text-xs">
+                    {status === "failed" && (
+                      <span className="bg-destructive/10 text-destructive rounded-full px-2 py-1 text-xs font-medium">
                         Failed
                       </span>
                     )}
 
-                    {doc.size && (
-                      <span className="text-muted-foreground text-xs">
-                        {(doc.size / 1024).toFixed(1)}KB
-                      </span>
-                    )}
-
+                    {/* Remove Button */}
                     <button
                       onClick={() => handleRemoveFile(doc)}
-                      className="hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-smooth flex h-6 w-6 items-center justify-center rounded"
+                      className="hover:bg-destructive/10 text-muted-foreground hover:text-destructive flex h-7 w-7 items-center justify-center rounded-lg opacity-0 transition-all group-hover:opacity-100"
                       aria-label={`Remove ${doc.filename}`}
                     >
                       <X className="h-3.5 w-3.5" />
@@ -140,16 +145,21 @@ export function DocumentUploadStatus({
             </div>
           </div>
 
+          {/* Actions */}
           <div className="flex items-center justify-center gap-3">
-            <Button variant="outline" onClick={onUploadMore}>
+            <Button
+              variant="outline"
+              onClick={onUploadMore}
+              className="rounded-xl"
+            >
               <Upload className="h-4 w-4" />
-              Upload More Files
+              Add More
             </Button>
 
-            {hasSuccessfulUploads && (
+            {hasuploadedfulUploads && (
               <Button
                 onClick={onStartProcessing}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-primary hover:bg-primary/90 rounded-xl"
               >
                 <Play className="h-4 w-4" />
                 Start Processing

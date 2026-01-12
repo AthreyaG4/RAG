@@ -2,7 +2,7 @@ import { useLoaderData, redirect, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
 import { useProjects } from "../hooks/useProjects.js";
 import { useDocuments } from "../hooks/useDocuments.js";
-import { useTask } from "../hooks/useTask.js";
+import { useProgress } from "../hooks/useProgress.js";
 import { ProjectSidebar } from "../components/ProjectSidebar.jsx";
 import { UploadKnowledgeBase } from "../components/UploadKnowledgeBase";
 import { UploadModal } from "../components/UploadModal";
@@ -25,6 +25,7 @@ export default function Index() {
     loading,
     createProject,
     updateProject,
+    processProject,
     deleteProject,
   } = useProjects(token);
 
@@ -39,17 +40,15 @@ export default function Index() {
   const selectedProject =
     projects.find((p) => p.id === selectedProjectId) ?? null;
 
-  const { documents, createDocuments, deleteDocument } = useDocuments(
-    token,
-    selectedProjectId,
-  );
-
-  const { task, createTask } = useTask(token, selectedProjectId);
+  const { documents, createDocuments, deleteDocument, refetchDocuments } =
+    useDocuments(token, selectedProjectId);
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
   const [isViewKnowledgeBaseOpen, setIsViewKnowledgeBaseOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const { progress, refetchProgress } = useProgress(token, selectedProjectId);
 
   const handleCreateProject = async (name) => {
     const project = await createProject(name);
@@ -74,6 +73,7 @@ export default function Index() {
       setIsUploadModalOpen(false);
       return;
     }
+
     await createDocuments(files);
 
     setProjects((prev) =>
@@ -96,39 +96,17 @@ export default function Index() {
   const handleStartProcessing = async () => {
     if (!selectedProjectId) return;
 
-    // Create the task and start processing
-    await createTask(); // This starts polling automatically
-
-    setProjects((prev) =>
-      prev.map((p) =>
-        p.id === selectedProjectId ? { ...p, status: "processing" } : p,
-      ),
-    );
-  };
-
-  const handleProcessingComplete = () => {
-    if (!selectedProjectId) return;
-
-    setProjects((prev) =>
-      prev.map((p) =>
-        p.id === selectedProjectId
-          ? {
-              ...p,
-              status: "ready",
-            }
-          : p,
-      ),
-    );
+    await processProject(selectedProjectId);
+    refetchProgress();
   };
 
   useEffect(() => {
-    if (
-      task?.status === "SUCCESS" &&
-      selectedProject?.status === "processing"
-    ) {
-      handleProcessingComplete();
+    if (!selectedProject) return;
+
+    if (selectedProject.status === "ready") {
+      refetchDocuments();
     }
-  }, [task?.status]);
+  }, [selectedProject?.status]);
 
   const renderMainContent = () => {
     if (!selectedProject) {
@@ -151,12 +129,10 @@ export default function Index() {
         <ProcessingTimeline
           projectName={selectedProject.name}
           isSidebarOpen={isSidebarOpen}
-          onComplete={handleProcessingComplete}
-          task={task}
+          progress={progress}
         />
       );
     }
-    ``;
 
     if (selectedProject.status == "uploaded") {
       return (

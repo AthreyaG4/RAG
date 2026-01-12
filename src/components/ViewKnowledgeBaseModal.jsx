@@ -89,7 +89,7 @@ export function ViewKnowledgeBaseModal({
                           <div className="flex gap-1">
                             <span
                               className={`rounded-full border px-2 py-0.5 text-xs ${
-                                chunk.hasText
+                                chunk.has_text
                                   ? "bg-primary/10 text-primary border-primary/30"
                                   : "bg-muted text-muted-foreground/50 border-border"
                               }`}
@@ -98,17 +98,26 @@ export function ViewKnowledgeBaseModal({
                             </span>
                             <span
                               className={`rounded-full border px-2 py-0.5 text-xs ${
-                                chunk.hasImage
+                                chunk.has_image
                                   ? "border-purple-500/30 bg-purple-500/10 text-purple-500"
                                   : "bg-muted text-muted-foreground/50 border-border"
                               }`}
                             >
                               image
                             </span>
+                            <span
+                              className={`rounded-full border px-2 py-0.5 text-xs ${
+                                chunk.has_table
+                                  ? "border-red-500/30 bg-red-500/10 text-red-500"
+                                  : "bg-muted text-muted-foreground/50 border-border"
+                              }`}
+                            >
+                              table
+                            </span>
                           </div>
                         </div>
                         <p className="text-muted-foreground truncate text-sm">
-                          {chunk.preview}
+                          {chunk.content}
                         </p>
                       </div>
                     ))}

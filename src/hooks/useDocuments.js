@@ -6,6 +6,18 @@ export function useDocuments(token, project_id) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const fetchDocuments = async () => {
+    try {
+      // console.log(`Fetching Documents for project: ${project_id}.....`);
+      const response = await api.getDocuments(token, project_id);
+      setDocuments(response);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!token || !project_id) {
       setDocuments([]);
@@ -13,17 +25,6 @@ export function useDocuments(token, project_id) {
       return;
     }
 
-    async function fetchDocuments() {
-      try {
-        // console.log(`Fetching Documents for project: ${project_id}.....`);
-        const response = await api.getDocuments(token, project_id);
-        setDocuments(response);
-      } catch (err) {
-        setError(err);
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchDocuments();
   }, [token, project_id]);
 
@@ -51,5 +52,6 @@ export function useDocuments(token, project_id) {
     error,
     createDocuments,
     deleteDocument,
+    refetchDocuments: fetchDocuments,
   };
 }
