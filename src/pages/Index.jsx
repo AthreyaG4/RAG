@@ -20,7 +20,7 @@ import { PanelLeft, Database } from "lucide-react";
 
 export default function Index() {
   const token = localStorage.getItem("token");
-  const { health : systemHealth } = useHealth();
+  const { health : systemHealth,  } = useHealth();
   const {
     projects,
     setProjects,

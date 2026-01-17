@@ -7,8 +7,9 @@ export function WarmingIndicator({
   systemHealth,
   className,
 }) {
-  
-  const isModelReady = systemHealth ? systemHealth.services.gpu_service == "healthy" : false;
+  const isModelReady = systemHealth
+    ? systemHealth.services.gpu_service == "healthy"
+    : false;
 
   return (
     <div
@@ -119,21 +120,10 @@ function WarmingItem({ icon: Icon, label, readyLabel, isReady }) {
 }
 
 // Compact inline version for chat interface
-export function WarmingBanner({ systemHealth, onHealthChange, className }) {
-  useEffect(() => {
-    if (systemHealth.model === "ready") return;
-
-    const timer = setTimeout(
-      () => {
-        onHealthChange?.((prev) => ({ ...prev, model: "ready" }));
-      },
-      2000 + Math.random() * 2000,
-    );
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  const isModelReady = systemHealth.model === "ready";
+export function WarmingBanner({ systemHealth, className }) {
+  const isModelReady = systemHealth
+    ? systemHealth.services.gpu_service == "healthy"
+    : false;
 
   if (isModelReady) return null;
 

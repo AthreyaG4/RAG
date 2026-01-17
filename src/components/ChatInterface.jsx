@@ -21,7 +21,9 @@ export function ChatInterface({
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  const modelReady = systemHealth ? systemHealth.services.gpu_service == "healthy" : false;
+  const modelReady = systemHealth
+    ? systemHealth.services.gpu_service == "healthy"
+    : false;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -60,7 +62,7 @@ export function ChatInterface({
         )}
       >
         {/* Warming Banner */}
-        <WarmingBanner onReady={() => setModelReady(true)} />
+        <WarmingBanner systemHealth={systemHealth} />
 
         <header
           className={`border-border bg-card/50 border-b px-6 py-4 backdrop-blur-sm ${!isSidebarOpen ? "pl-14" : ""}`}
