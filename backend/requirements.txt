@@ -1,0 +1,15 @@
+fastapi[standard]
+pydantic
+pydantic-settings
+python-dotenv
+sqlalchemy
+psycopg2-binary
+pyjwt
+pwdlib[argon2]
+python-multipart
+boto3
+celery
+redis
+pgvector
+requests
+llama-cloud-services
