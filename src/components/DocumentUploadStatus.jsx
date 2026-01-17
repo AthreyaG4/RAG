@@ -29,7 +29,9 @@ export function DocumentUploadStatus({
   onAllFilesRemoved,
   systemHealth,
 }) {
-  const modelReady = systemHealth ? systemHealth.services.gpu_service == "healthy" : false;
+  const modelReady = systemHealth
+    ? systemHealth.services.gpu_service == "healthy"
+    : false;
   const uploadedCount =
     documents?.filter((doc) => doc.status === "uploaded").length || 0;
   const failedCount =

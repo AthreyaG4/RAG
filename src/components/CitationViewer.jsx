@@ -61,7 +61,7 @@ export function CitationViewer({ citation, onClose }) {
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-muted-foreground min-w-[60px] px-2 text-center text-xs">
+          <span className="text-muted-foreground min-w-15 px-2 text-center text-xs">
             {currentPage} / {totalPages}
           </span>
           <Button
@@ -85,7 +85,7 @@ export function CitationViewer({ citation, onClose }) {
           >
             <ZoomOut className="h-4 w-4" />
           </Button>
-          <span className="text-muted-foreground min-w-[50px] px-2 text-center text-xs">
+          <span className="text-muted-foreground min-w-12.5 px-2 text-center text-xs">
             {zoom}%
           </span>
           <Button
@@ -146,7 +146,7 @@ export function CitationViewer({ citation, onClose }) {
       {/* Citation Snippet Footer */}
       <div className="border-border bg-accent/30 border-t px-4 py-3">
         <div className="flex items-start gap-3">
-          <div className="bg-primary h-full min-h-[40px] w-1 shrink-0 rounded-full" />
+          <div className="bg-primary h-full min-h-10 w-1 shrink-0 rounded-full" />
           <div className="min-w-0 flex-1">
             <p className="text-muted-foreground mb-1 text-xs font-medium">
               Referenced excerpt

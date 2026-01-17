@@ -20,7 +20,7 @@ import { PanelLeft, Database } from "lucide-react";
 
 export default function Index() {
   const token = localStorage.getItem("token");
-  const { health : systemHealth,  } = useHealth();
+  const { health: systemHealth, refetchHealth } = useHealth();
   const {
     projects,
     setProjects,
@@ -144,7 +144,14 @@ export default function Index() {
           projectName={selectedProject.name}
           isSidebarOpen={isSidebarOpen}
           onUploadMore={handleUploadMore}
-          onStartProcessing={handleStartProcessing}
+          onStartProcessing={async () => {
+            const response = await refetchHealth();
+
+            const modelReady = response?.services.gpu_service === "healthy";
+            if (!modelReady) return;
+
+            handleStartProcessing();
+          }}
           deleteDocument={deleteDocument}
           onAllFilesRemoved={() => {
             if (selectedProjectId) {

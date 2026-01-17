@@ -9,6 +9,7 @@ export function useHealth() {
     try {
       const response = await api.getHealth();
       setHealth(response);
+      return response;
     } catch (err) {
       console.error(err);
     } finally {
