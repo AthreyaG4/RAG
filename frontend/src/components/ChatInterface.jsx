@@ -37,8 +37,8 @@ export function ChatInterface({
     e.preventDefault();
     if (!input.trim() || loading) return;
 
-    await createMessage(input.trim());
     setInput("");
+    await createMessage(input.trim());
   };
 
   const handleKeyDown = (e) => {

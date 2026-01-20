@@ -92,6 +92,7 @@ class ProjectProgressResponse(BaseModel):
 class ChunkResponse(BaseModel):
     id: UUID
     document_id: UUID
+    project_id: UUID
     content: str
     summarised_content: str | None = None
     has_text: bool | None = None

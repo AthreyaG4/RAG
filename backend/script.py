@@ -8,13 +8,12 @@ from routes.documentChunks import route as chunk_route
 from routes.auth import route as login_route
 from routes.messages import route as messages_route
 from fastapi.middleware.cors import CORSMiddleware
-import requests
 
 import logging
 
 logging.basicConfig(
     level=logging.INFO,
-    format=f"%(asctime)s - RAG Service - %(levelname)s - %(message)s",
+    format="%(asctime)s - RAG Service - %(levelname)s - %(message)s",
 )
 
 logger = logging.getLogger(__name__)

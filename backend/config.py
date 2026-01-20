@@ -38,5 +38,8 @@ class Settings(BaseSettings):
     # GPU Service
     GPU_SERVICE_URL: str
 
+    # Chat Service
+    CHAT_SERVICE_URL: str
+
 
 settings = Settings()  # type: ignore

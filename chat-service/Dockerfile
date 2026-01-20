@@ -17,6 +17,6 @@ RUN chown -R $USER:$USER /app
 
 USER $USER
 
-EXPOSE 8000
+EXPOSE 8001
 
-CMD ["uvicorn", "script:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "script:app", "--host", "0.0.0.0", "--port", "8001"]

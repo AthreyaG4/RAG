@@ -24,7 +24,7 @@ def chunk_document(document):
         hide_headers=True,
         hide_footers=True,
         user_prompt=""" For every object image in the page (not screenshots), insert a placeholder using the exact filename.
-                        The filenames follow the format img_p{page_number}_{image_number}.png, e.g., img_p0_1.png for the first image on page 0.
+                        The filenames follow the format img_p{page_number}_{image_number}.png, e.g., img_p1_1.png for the first image on page 1.
                         Do not insert placeholders for screenshots. Keep all other content as normal markdown.""",
     )
 

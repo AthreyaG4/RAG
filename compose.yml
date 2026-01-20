@@ -4,13 +4,13 @@ services:
     container_name: postgres-db
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - ./backend/schema.sql:/docker-entrypoint-initdb.d/schema.sql
     environment:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_DB=${DB_NAME}
     networks:
-      - backend
+      - rag
   pgweb:
     container_name: pgweb
     restart: always
@@ -18,36 +18,53 @@ services:
     ports:
       - "8081:8081"
     networks:
-      - backend
+      - rag
 
   api:
-    build: .
+    build: ./backend
     tty: true
     ports:
       - "5000:5000"
     networks:
-      - backend
+      - rag
     env_file:
-      - .env
+      - ./backend/.env
     volumes:
-      - ./:/app
+      - image-storage:/app/images
 
   celery-worker:
-    build: .
-    command: celery -A celery_app worker --loglevel=info --concurrency=5
+    build: ./backend
+    command: celery -A celery_app worker --loglevel=WARNING --concurrency=5
     container_name: celery-worker
     networks:
-      - backend
+      - rag
     volumes:
-      - ./:/app
+      - image-storage:/app/images
     env_file:
-      - .env
+      - ./backend/.env
+
+  # rag-gpu-service:
+  #   build: ./gpu-service
+  #   container_name: rag-gpu-service
+  #   ports:
+  #     - "8000:8000"
+  #   networks:
+  #     - rag
+
+  # rag-chat-service:
+  #   build: ./chat-service
+  #   container_name: rag-chat-service
+  #   ports:
+  #     - "8001:8001"
+  #   networks:
+  #     - rag
+
 
   redis:
     container_name: redis-db
     image: redis:8-alpine
     networks:
-      - backend
+      - rag
     volumes:
       - redis-data:/data
 
@@ -61,11 +78,12 @@ services:
     ports:
       - "8082:8081"
     networks:
-      - backend
+      - rag
 
 volumes:
   postgres-data:
   redis-data:
+  image-storage:
 
 networks:
-  backend:
+  rag:

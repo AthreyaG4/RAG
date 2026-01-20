@@ -23,7 +23,7 @@ export function useHealth() {
 
   useEffect(() => {
     if (!health || health.status == "healthy") return;
-    
+
     const timeout = setTimeout(fetchHealth, 2000);
     return () => clearTimeout(timeout);
   }, [health]);

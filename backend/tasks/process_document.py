@@ -20,6 +20,10 @@ def process_document(self, project_id: str, document_id: str):
         doc_uuid = UUID(document_id)
         project_uuid = UUID(project_id)
 
+        project = db.query(Project).filter(Project.id == project_uuid).first()
+        if not project:
+            return {"status": "error", "message": "Project not found"}
+
         document = (
             db.query(Document).filter(Document.id == doc_uuid).with_for_update().first()
         )
@@ -30,10 +34,6 @@ def process_document(self, project_id: str, document_id: str):
         if document.status not in ("uploaded", "failed"):
             return {"status": "already_processing"}
 
-        project = db.query(Project).filter(Project.id == project_uuid).first()
-        if not project:
-            return {"status": "error", "message": "Project not found"}
-
         document.status = "chunking"
         db.commit()
 
@@ -41,6 +41,7 @@ def process_document(self, project_id: str, document_id: str):
 
         for chunk in chunks:
             new_chunk = Chunk(
+                project_id=project.id,
                 document_id=document.id,
                 content=chunk["content"],
                 page_number=chunk["page_number"],

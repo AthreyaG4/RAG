@@ -1,11 +1,18 @@
 FROM python:3.11-slim
 
+RUN useradd -m appuser
+
 WORKDIR /app
 
 COPY requirements.txt .
+RUN pip install uv
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN uv pip install --no-cache-dir -r requirements.txt --system
 
 COPY . .
 
-CMD ["uvicorn", "script:app", "--host", "0.0.0.0", "--port", "5000", "--reload"]
+RUN chown -R appuser:appuser /app
+
+USER appuser
+
+CMD ["uvicorn", "script:app", "--host", "0.0.0.0", "--port", "5000"]

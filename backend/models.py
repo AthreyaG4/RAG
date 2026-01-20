@@ -56,7 +56,10 @@ class Document(Base):
 
     project = relationship("Project", back_populates="documents")
     chunks = relationship(
-        "Chunk", back_populates="document", cascade="all, delete-orphan"
+        "Chunk",
+        back_populates="document",
+        cascade="all, delete-orphan",
+        order_by="Chunk.page_number.asc()",
     )
 
 
@@ -74,6 +77,7 @@ class Chunk(Base):
     page_number = Column(Integer, nullable=False)
 
     document_id = Column(UUID(as_uuid=True), ForeignKey("documents.id"))
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
 
     document = relationship("Document", back_populates="chunks")

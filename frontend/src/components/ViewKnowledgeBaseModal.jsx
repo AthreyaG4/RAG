@@ -116,7 +116,7 @@ export function ViewKnowledgeBaseModal({
                             </span>
                           </div>
                         </div>
-                        <p className="text-muted-foreground truncate text-sm">
+                        <p className="text-muted-foreground text-sm whitespace-pre-wrap">
                           {chunk.content}
                         </p>
                       </div>
