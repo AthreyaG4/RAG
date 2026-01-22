@@ -197,7 +197,7 @@ export function ChatInterface({
 
       {/* Citation Viewer Panel */}
       {activeCitation && (
-        <div className="border-border animate-fade-in w-[40%] max-w-[500px] min-w-[320px] border-l">
+        <div className="border-border animate-fade-in w-[40%] max-w-125 min-w-[320px] border-l">
           <CitationViewer
             citation={activeCitation}
             onClose={() => setActiveCitation(null)}
