@@ -107,3 +107,14 @@ class Message(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     project = relationship("Project", back_populates="messages")
+
+class Source(Base):
+    __tablename__ = "sources"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    message_id = Column(UUID(as_uuid=True), ForeignKey("messages.id"))
+    document_name = Column(String, nullable=False)
+    document_s3_key = Column(String, nullable=False)
+    page_number = Column(Integer, nullable=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow)

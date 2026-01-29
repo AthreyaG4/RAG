@@ -41,5 +41,8 @@ class Settings(BaseSettings):
     # Chat Service
     CHAT_SERVICE_URL: str
 
+    # OpenAI
+    OPENAI_API_KEY: str
+
 
 settings = Settings()  # type: ignore

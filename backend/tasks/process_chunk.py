@@ -5,6 +5,7 @@ from uuid import UUID
 import requests
 from config import settings
 from utils.s3 import get_presigned_urls_for_chunk_images
+from litellm import embedding
 
 HF_ACCESS_TOKEN = settings.HF_ACCESS_TOKEN
 GPU_SERVICE_URL = settings.GPU_SERVICE_URL
@@ -66,17 +67,18 @@ def process_chunk(self, chunk_id: str):
         chunk.status = "summarized"
         document.chunks_summarized += 1
 
-        embed_resp = requests.post(
-            f"{GPU_SERVICE_URL}/embed",
-            headers={"Authorization": f"Bearer {HF_ACCESS_TOKEN}"},
-            json={"summarized_text": summarized_text},
-            timeout=100,
+        # embed_resp = requests.post(
+        #     f"{GPU_SERVICE_URL}/embed",
+        #     headers={"Authorization": f"Bearer {HF_ACCESS_TOKEN}"},
+        #     json={"summarized_text": summarized_text},
+        #     timeout=100,
+        # )
+
+        embed_resp = embedding(
+            model="text-embedding-3-small", input=summarized_text, dimensions=384
         )
-        embed_resp.raise_for_status()
 
-        embedding = embed_resp.json()["embedding_vector"]
-
-        chunk.embedding = embedding
+        chunk.embedding = embed_resp.data[0]["embedding"]
         chunk.status = "embedded"
         document.chunks_embedded += 1
 

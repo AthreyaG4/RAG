@@ -118,6 +118,18 @@ class MessageResponse(BaseModel):
     role: str
     content: str
     created_at: datetime
+    sources: List["SourceResponse"] = []
 
     class Config:
         from_attributes = True
+
+
+class SourceResponse(BaseModel):
+    document_name: str
+    document_s3_key: str
+    page_number: int
+
+
+class OpenAIResponse(BaseModel):
+    answer: str
+    sources: List[str]

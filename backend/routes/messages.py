@@ -1,16 +1,17 @@
+import traceback
 from fastapi import Depends, APIRouter, HTTPException, status
 from fastapi.responses import StreamingResponse
-from schemas import MessageCreateRequest, MessageResponse
+from schemas import MessageCreateRequest, MessageResponse, SourceResponse
 from db import get_db
-from models import User, Project, Message, Chunk
+from models import User, Project, Message, Chunk, Document, Source
 from sqlalchemy.orm import Session
 from uuid import UUID
 from security.jwt import get_current_active_user
 import requests
 from config import settings
-import logging
-import httpx
 import json
+from litellm import acompletion, embedding
+
 
 route = APIRouter(prefix="/api/projects/{project_id}/messages", tags=["messages"])
 
@@ -79,9 +80,11 @@ async def create_message(
         timeout=100,
     )
 
-    embed_resp.raise_for_status()
+    embed_resp = embedding(
+        model="text-embedding-3-small", input=message.content, dimensions=384
+    )
 
-    message_embedding = embed_resp.json()["embedding_vector"]
+    message_embedding = embed_resp.data[0]["embedding"]
 
     chunks = (
         db.query(Chunk)
@@ -94,7 +97,7 @@ async def create_message(
     context_blocks = []
 
     for i, chunk in enumerate(chunks, start=1):
-        context_blocks.append(f"[Document {i}]\n{chunk.summarised_content.strip()}")
+        context_blocks.append(f"[{i}]\n{chunk.summarised_content.strip()}")
 
     context = "\n\n".join(context_blocks)
 
@@ -121,29 +124,79 @@ async def create_message(
     async def stream():
         full_response = []
 
-        async with httpx.AsyncClient(timeout=None) as client:
-            async with client.stream(
-                "POST",
-                f"{CHAT_SERVICE_URL}/generate",
-                json={"prompt": prompt},
-                headers={
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {HF_ACCESS_TOKEN}",
-                },
-            ) as resp:
-                async for chunk in resp.aiter_bytes():
-                    yield chunk
+        try:
+            response = await acompletion(
+                model="gpt-5-nano",
+                max_tokens=1000,
+                reasoning_effort="low",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": """
+                            Answer the user's question based on the retrieved context from the documents. If the context does not provide enough information, respond with "I don't know". 
+                            Be concise and to the point.
 
-                    text = chunk.decode("utf-8")
+                            Answer:
+                            <Your answer here>
 
-                    if text.startswith("data:"):
-                        payload = json.loads(text.replace("data:", "").strip())
-                        if "content" in payload:
-                            full_response.append(payload["content"])
+                            Sources:
+                            <List of sources used in single line separated by a comma.>.
+                            """,
+                    },
+                    {"content": prompt, "role": "user"},
+                ],
+                stream=True,
+            )
 
-        assistant_message.content = "".join(full_response)
-        db.add(assistant_message)
-        db.commit()
+            async for chunk in response:
+                if hasattr(chunk, "choices") and len(chunk.choices) > 0:
+                    delta = chunk.choices[0].delta
+
+                    if hasattr(delta, "content") and delta.content:
+                        content = delta.content
+                        full_response.append(content)
+
+                        yield f"data: {json.dumps({'content': content})}\n\n"
+
+            assistant_message.content = "".join(full_response)
+
+            # sources = assistant_message.content.split("Sources:")[1].strip()
+            # sources_list = sources.split(",") if sources else []
+            # print(sources_list)
+            # for source in sources_list:
+            #     source = source.strip().strip("[]")
+            #     if source.isdigit():
+            #         chunk_index = int(source) - 1
+            #         print(chunk_index)
+            #         print(chunks[chunk_index].page_number)
+            #         chunk = chunks[chunk_index]
+            #         page_number = chunk.page_number
+            #         document = (
+            #             db.query(Document)
+            #             .filter(Document.id == chunk.document_id)
+            #             .first()
+            #         )
+            #         document_name = document.filename
+            #         document_s3_key = document.s3_key
+
+            #         source_entry = Source(
+            #             document_name=document_name,
+            #             document_s3_key=document_s3_key,
+            #             page_number=page_number,
+            #             message_id=assistant_message.id,
+            #         )
+
+            #         db.add(source_entry)
+            #         db.commit()
+            #         db.refresh(source_entry)
+
+            db.commit()
+
+            yield f"data: {json.dumps({'done': True})}\n\n"
+
+        except Exception as e:
+            print(f"Error in stream: {traceback.format_exc()}")
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
     return StreamingResponse(
         stream(),
