@@ -1,25 +1,27 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, use } from "react";
 import { Send, Bot, User, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { cn } from "../lib/utils";
 import { useMessages } from "../hooks/useMessages";
 import { CitationViewer } from "../components/CitationViewer";
 import { CitationBadge } from "../components/CitationBadge";
-import { WarmingBanner } from "../components/WarmingIndicator";
+import { useUI } from "../hooks/useUI";
+import { useProjects } from "../hooks/useProjects";
+import { useHealth } from "../hooks/useHealth";
 
-export function ChatInterface({
-  projectId,
-  projectName,
-  isSidebarOpen = true,
-  systemHealth,
-}) {
-  const token = localStorage.getItem("token");
-  const { messages, loading, createMessage } = useMessages(token, projectId);
+export function ChatInterface() {
+  const { messages, loading, createMessage } = useMessages();
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [activeCitation, setActiveCitation] = useState(null);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+
+  const { selectedProject } = useProjects();
+  const { isSidebarOpen } = useUI();
+
+  const projectName = selectedProject ? selectedProject.name : "Loading...";
+  const { health: systemHealth } = useHealth();
 
   const modelReady = systemHealth
     ? systemHealth.services.gpu_service == "healthy"
@@ -61,9 +63,6 @@ export function ChatInterface({
           activeCitation ? "w-[60%]" : "w-full",
         )}
       >
-        {/* Warming Banner */}
-        <WarmingBanner systemHealth={systemHealth} />
-
         <header
           className={`border-border bg-card/50 border-b px-6 py-4 backdrop-blur-sm ${!isSidebarOpen ? "pl-14" : ""}`}
         >

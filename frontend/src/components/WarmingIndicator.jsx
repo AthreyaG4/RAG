@@ -15,7 +15,7 @@ export function WarmingIndicator({
     <div
       className={cn(
         "flex flex-col gap-3 rounded-2xl p-4",
-        "from-accent/50 via-accent/30 bg-gradient-to-br to-transparent",
+        "from-accent/50 via-accent/30 bg-linear-to-br to-transparent",
         "border-accent/50 border backdrop-blur-sm",
         "animate-fade-in",
         className,
@@ -115,56 +115,6 @@ function WarmingItem({ icon: Icon, label, readyLabel, isReady }) {
           />
         </div>
       )}
-    </div>
-  );
-}
-
-// Compact inline version for chat interface
-export function WarmingBanner({ systemHealth, className }) {
-  const isModelReady = systemHealth
-    ? systemHealth.services.gpu_service == "healthy"
-    : false;
-
-  if (isModelReady) return null;
-
-  return (
-    <div
-      className={cn(
-        "flex items-center justify-center gap-3 px-4 py-2.5",
-        "from-accent/60 via-accent/40 to-accent/60 bg-gradient-to-r",
-        "border-accent/50 border-b",
-        "animate-fade-in",
-        className,
-      )}
-    >
-      <div className="relative">
-        <Cpu className="text-primary h-4 w-4" />
-        <div
-          className="border-primary/50 border-t-primary absolute inset-0 animate-spin rounded-full border"
-          style={{
-            margin: "-2px",
-            width: "calc(100% + 4px)",
-            height: "calc(100% + 4px)",
-          }}
-        />
-      </div>
-      <span className="text-foreground/80 text-sm font-medium">
-        Model Warming Up
-      </span>
-      <div className="flex gap-1">
-        <span
-          className="bg-primary h-1 w-1 animate-bounce rounded-full"
-          style={{ animationDelay: "0ms" }}
-        />
-        <span
-          className="bg-primary h-1 w-1 animate-bounce rounded-full"
-          style={{ animationDelay: "150ms" }}
-        />
-        <span
-          className="bg-primary h-1 w-1 animate-bounce rounded-full"
-          style={{ animationDelay: "300ms" }}
-        />
-      </div>
     </div>
   );
 }

@@ -7,12 +7,11 @@ import {
   Database,
 } from "lucide-react";
 import { cn } from "../lib/utils";
+import { useProjects } from "../hooks/useProjects";
+import { useProgress } from "../hooks/useProgress";
+import { useUI } from "../hooks/useUI";
 
-export function ProcessingTimeline({
-  projectName,
-  isSidebarOpen = true,
-  progress,
-}) {
+export function ProcessingTimeline() {
   if (!progress) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -20,6 +19,11 @@ export function ProcessingTimeline({
       </div>
     );
   }
+  const { progress } = useProgress();
+  const { isSidebarOpen } = useUI();
+  const { selectedProject } = useProjects();
+
+  const projectName = selectedProject?.name || "Project";
 
   const { documents, total_documents, documents_processed } = progress;
 

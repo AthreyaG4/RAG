@@ -18,17 +18,26 @@ import {
   DialogTitle,
 } from "../components/ui/dialog";
 import { WarmingIndicator } from "../components/WarmingIndicator";
+import { useHealth } from "../hooks/useHealth.js";
+import { useDocuments } from "../hooks/useDocuments.js";
+import { useProjects } from "../hooks/useProjects.js";
+import { useUI } from "../hooks/useUI.js";
+import { useProgress } from "../hooks/useProgress.js";
 
-export function DocumentUploadStatus({
-  documents,
-  projectName,
-  isSidebarOpen,
-  onUploadMore,
-  onStartProcessing,
-  deleteDocument,
-  onAllFilesRemoved,
-  systemHealth,
-}) {
+export function DocumentUploadStatus({ onAllFilesRemoved }) {
+  const { documents, deleteDocument } = useDocuments();
+  const {
+    selectedProject,
+    selectedProjectId,
+    markProjectCreated,
+    processProject,
+  } = useProjects();
+  const projectName = selectedProject?.name || "Untitled Project";
+
+  const { isSidebarOpen, setIsUploadModalOpen } = useUI();
+  const { refetchProgress } = useProgress();
+  const { health: systemHealth, refetchHealth } = useHealth();
+
   const modelReady = systemHealth
     ? systemHealth.services.gpu_service == "healthy"
     : false;
@@ -54,7 +63,7 @@ export function DocumentUploadStatus({
     setDocumentToRemove(null);
 
     if (isLastFile) {
-      onAllFilesRemoved?.();
+      markProjectCreated(selectedProjectId);
     }
   };
 
@@ -162,7 +171,9 @@ export function DocumentUploadStatus({
           <div className="flex items-center justify-center gap-3">
             <Button
               variant="outline"
-              onClick={onUploadMore}
+              onClick={() => {
+                setIsUploadModalOpen(true);
+              }}
               className="rounded-xl"
             >
               <Upload className="h-4 w-4" />
@@ -171,7 +182,18 @@ export function DocumentUploadStatus({
 
             {hasSuccessfulUploads && (
               <Button
-                onClick={onStartProcessing}
+                onClick={async () => {
+                  const response = await refetchHealth();
+
+                  const modelReady =
+                    response?.services.gpu_service === "healthy";
+                  if (!modelReady) return;
+
+                  if (!selectedProjectId) return;
+
+                  await processProject(selectedProjectId);
+                  refetchProgress();
+                }}
                 disabled={!modelReady}
                 className={cn(
                   "bg-primary hover:bg-primary/90 rounded-xl",

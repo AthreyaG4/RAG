@@ -4,12 +4,17 @@ import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { useUI } from "../hooks/useUI";
+import { useProjects } from "../hooks/useProjects";
 
-export function NewProjectModal({ isOpen, onClose, onCreateProject }) {
+export function NewProjectModal() {
   const [projectName, setProjectName] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
+  const { isNewProjectModalOpen, setIsNewProjectModalOpen } = useUI();
+  const { createProject, setSelectedProjectId } = useProjects();
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const trimmedName = projectName.trim();
 
@@ -23,20 +28,22 @@ export function NewProjectModal({ isOpen, onClose, onCreateProject }) {
       return;
     }
 
-    onCreateProject(trimmedName);
+    const project = await createProject(trimmedName);
+    setSelectedProjectId(project.id);
+
     setProjectName("");
     setError("");
-    onClose();
+    setIsNewProjectModalOpen(false);
   };
 
   const handleClose = () => {
     setProjectName("");
     setError("");
-    onClose();
+    setIsNewProjectModalOpen(false);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog open={isNewProjectModalOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

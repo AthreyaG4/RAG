@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { use, useState } from "react";
 import {
   Plus,
   FolderOpen,
@@ -19,18 +19,21 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { cn } from "../lib/utils";
+import { useProjects } from "../hooks/useProjects";
+import { useUI } from "../hooks/useUI";
 
-export function ProjectSidebar({
-  projects,
-  selectedProject,
-  onSelectProject,
-  onNewProject,
-  onRenameProject,
-  onDeleteProject,
-  onClose,
-}) {
+export function ProjectSidebar() {
   const [editingId, setEditingId] = useState(null);
   const [editName, setEditName] = useState("");
+
+  const {
+    projects,
+    selectedProjectId,
+    setSelectedProjectId,
+    updateProject,
+    deleteProject,
+  } = useProjects();
+  const { setIsSidebarOpen, setIsNewProjectModalOpen } = useUI();
 
   const handleStartRename = (project, e) => {
     e.stopPropagation();
@@ -38,9 +41,9 @@ export function ProjectSidebar({
     setEditName(project.name);
   };
 
-  const handleConfirmRename = (projectId) => {
+  const handleConfirmRename = async (projectId) => {
     if (editName.trim()) {
-      onRenameProject(projectId, editName.trim());
+      await updateProject(projectId, editName.trim());
     }
     setEditingId(null);
     setEditName("");
@@ -63,12 +66,12 @@ export function ProjectSidebar({
   const pendingProjects = projects.filter((p) => p.status !== "ready");
 
   return (
-    <aside className="from-sidebar to-sidebar/95 border-sidebar-border animate-slide-in flex h-screen w-72 flex-col border-r bg-gradient-to-b">
+    <aside className="from-sidebar to-sidebar/95 border-sidebar-border animate-slide-in flex h-screen w-72 flex-col border-r bg-linear-to-b">
       {/* Header */}
       <div className="border-sidebar-border/50 border-b p-5">
         <div className="mb-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="from-primary to-primary/80 shadow-primary/20 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br shadow-lg">
+            <div className="from-primary to-primary/80 shadow-primary/20 flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br shadow-lg">
               <MessageSquare className="text-primary-foreground h-5 w-5" />
             </div>
             <div>
@@ -83,14 +86,14 @@ export function ProjectSidebar({
           <Button
             variant="ghost"
             size="icon"
-            onClick={onClose}
+            onClick={() => setIsSidebarOpen(false)}
             className="text-muted-foreground hover:text-foreground hover:bg-sidebar-accent h-8 w-8 rounded-lg"
           >
             <PanelLeftClose className="h-4 w-4" />
           </Button>
         </div>
         <Button
-          onClick={onNewProject}
+          onClick={() => setIsNewProjectModalOpen(true)}
           className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-primary/20 h-11 w-full justify-center gap-2 rounded-xl font-medium shadow-md"
         >
           <Plus className="h-4 w-4" />
@@ -117,16 +120,23 @@ export function ProjectSidebar({
                 <ProjectItem
                   key={project.id}
                   project={project}
-                  isSelected={selectedProject?.id === project.id}
+                  isSelected={selectedProjectId === project.id}
                   isEditing={editingId === project.id}
                   editName={editName}
-                  onSelect={() => onSelectProject(project)}
+                  onSelect={() => setSelectedProjectId(project.id)}
                   onStartRename={(e) => handleStartRename(project, e)}
                   onConfirmRename={() => handleConfirmRename(project.id)}
                   onCancelRename={handleCancelRename}
                   onEditNameChange={setEditName}
                   onKeyDown={(e) => handleKeyDown(e, project.id)}
-                  onDelete={() => onDeleteProject(project.id)}
+                  onDelete={async () => {
+                    await deleteProject(project.id);
+                    setSelectedProjectId(
+                      selectedProjectId === project.id
+                        ? null
+                        : selectedProjectId,
+                    );
+                  }}
                   animationDelay={index * 50}
                 />
               ))}
@@ -151,16 +161,23 @@ export function ProjectSidebar({
                 <ProjectItem
                   key={project.id}
                   project={project}
-                  isSelected={selectedProject?.id === project.id}
+                  isSelected={selectedProjectId === project.id}
                   isEditing={editingId === project.id}
                   editName={editName}
-                  onSelect={() => onSelectProject(project)}
+                  onSelect={() => setSelectedProjectId(project.id)}
                   onStartRename={(e) => handleStartRename(project, e)}
                   onConfirmRename={() => handleConfirmRename(project.id)}
                   onCancelRename={handleCancelRename}
                   onEditNameChange={setEditName}
                   onKeyDown={(e) => handleKeyDown(e, project.id)}
-                  onDelete={() => onDeleteProject(project.id)}
+                  onDelete={async () => {
+                    await deleteProject(project.id);
+                    setSelectedProjectId(
+                      selectedProjectId === project.id
+                        ? null
+                        : selectedProjectId,
+                    );
+                  }}
                   animationDelay={index * 50}
                 />
               ))}

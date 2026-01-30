@@ -5,12 +5,16 @@ import { Button } from "../components/ui/button.jsx";
 import { Label } from "../components/ui/label.jsx";
 import { toast } from "../components/ui/sonner.jsx";
 
+import { useAuth } from "../hooks/useAuth.js";
+
 export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
+
+  const { login } = useAuth();
 
   const validate = () => {
     const newErrors = {};
@@ -45,26 +49,13 @@ export default function Login() {
 
     setIsLoading(true);
     try {
-      let response = await fetch("http://localhost:5000/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: formData,
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Login failed");
-      }
-      const data = await response.json();
-      localStorage.setItem("token", data.access_token);
-
-      setIsLoading(false);
+      setIsLoading(true);
+      await login({ email, password });
       navigate("/");
-    } catch (error) {
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
       setIsLoading(false);
-      console.error("Login failed:", error);
-      toast.error("Login failed: " + error.message);
     }
   };
 

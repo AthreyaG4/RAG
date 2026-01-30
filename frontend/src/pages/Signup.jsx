@@ -5,6 +5,8 @@ import { Button } from "../components/ui/button.jsx";
 import { Label } from "../components/ui/label.jsx";
 import { toast } from "../components/ui/sonner.jsx";
 
+import { useAuth } from "../hooks/useAuth.js";
+
 export default function Signup() {
   const navigate = useNavigate();
   const [name, setName] = useState("");
@@ -15,6 +17,8 @@ export default function Signup() {
   const [isLoading, setIsLoading] = useState(false);
 
   const [errors, setErrors] = useState({});
+
+  const { signup } = useAuth();
 
   const validate = () => {
     const newErrors = {};
@@ -52,51 +56,19 @@ export default function Signup() {
       return;
     }
 
-    setIsLoading(true);
-
     try {
-      const response = await fetch("http://localhost:5000/api/users", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          username,
-          email,
-          password,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.log("Error data:", errorData);
-
-        let message = "Signup failed. Please try again.";
-
-        if (typeof errorData?.detail === "string") {
-          message = errorData.detail;
-        } else if (typeof errorData?.detail === "object") {
-          message = Object.values(errorData.detail)[0];
-        }
-
-        toast.error(message);
-
-        if (typeof errorData?.detail === "object") {
-          setErrors((prev) => ({
-            ...prev,
-            ...errorData.detail,
-          }));
-        }
-
-        setIsLoading(false);
-        return;
-      }
-
+      setIsLoading(true);
+      await signup({ name, username, email, password });
       toast.success("Account created successfully!");
       navigate("/login");
-    } catch (error) {
-      toast.error("An error occurred. Please try again.");
+    } catch (err) {
+      console.log(err.message);
+      if (err?.detail) {
+        toast.error(Object.values(err.detail)[0]);
+        setErrors(err.detail ?? {});
+      } else {
+        toast.error("Signup failed");
+      }
     } finally {
       setIsLoading(false);
     }

@@ -1,54 +1,52 @@
+import instance from "./instance";
+
 export async function getProjects(token) {
-  const res = await fetch("http://localhost:5000/api/projects", {
-    headers: { Authorization: `Bearer ${token}` },
+  const { data } = await instance.get("/projects", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
-  return res.json();
+  return data;
 }
 
 export async function createProject(token, projectName) {
   const payload = { name: projectName };
-  const response = await fetch("http://localhost:5000/api/projects", {
-    method: "POST",
+
+  const { data } = await instance.post("/projects", payload, {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(payload),
   });
-  return response.json();
+  return data;
 }
 
 export async function processProject(token, id) {
-  const response = await fetch(
-    `http://localhost:5000/api/projects/${id}/process`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+  const { data } = await instance.post(`/projects/${id}/process`, null, {
+    headers: {
+      Authorization: `Bearer ${token}`,
     },
-  );
-  return response.json();
+  });
+  return data;
 }
 
 export async function updateProject(token, id, updatedName) {
   const payload = { name: updatedName };
-  const response = await fetch(`http://localhost:5000/api/projects/${id}`, {
-    method: "PATCH",
+
+  const { data } = await instance.patch(`/projects/${id}`, payload, {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(payload),
   });
-  return response.json();
+  return data;
 }
 
 export async function deleteProject(token, id) {
-  return fetch(`http://localhost:5000/api/projects/${id}`, {
-    method: "DELETE",
+  const { data } = await instance.delete(`/projects/${id}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
+  return data;
 }

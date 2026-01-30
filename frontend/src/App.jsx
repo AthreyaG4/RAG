@@ -3,8 +3,15 @@ import Index from "./pages/Index.jsx";
 import Login from "./pages/Login.jsx";
 import Signup from "./pages/Signup.jsx";
 import NotFound from "./pages/Error.jsx";
-import { loader as indexLoader } from "./pages/Index.jsx";
 import { Toaster } from "./components/ui/sonner.jsx";
+import { loader as indexLoader } from "./pages/Index.jsx";
+import { AuthProvider } from "./context/AuthContext.jsx";
+import { ProjectsProvider } from "./context/ProjectsContext.jsx";
+import { UIProvider } from "./context/UIContext.jsx";
+import { HealthProvider } from "./context/HealthContext.jsx";
+import { DocumentsProvider } from "./context/DocumentsContext.jsx";
+import { ProgressProvider } from "./context/ProgressContext.jsx";
+import { MessagesProvider } from "./context/MessagesContext.jsx";
 
 const router = createBrowserRouter([
   {
@@ -25,10 +32,22 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <>
-      <Toaster />
-      <RouterProvider router={router} />
-    </>
+    <AuthProvider>
+      <HealthProvider>
+        <ProjectsProvider>
+          <UIProvider>
+            <DocumentsProvider>
+              <ProgressProvider>
+                <MessagesProvider>
+                  <Toaster />
+                  <RouterProvider router={router} />
+                </MessagesProvider>
+              </ProgressProvider>
+            </DocumentsProvider>
+          </UIProvider>
+        </ProjectsProvider>
+      </HealthProvider>
+    </AuthProvider>
   );
 }
 

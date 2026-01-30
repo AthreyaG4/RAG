@@ -1,11 +1,10 @@
+import instance from "./instance";
+
 export async function getDocuments(token, project_id) {
-  const res = await fetch(
-    `http://localhost:5000/api/projects/${project_id}/documents`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    },
-  );
-  return res.json();
+  const { data } = await instance.get(`/projects/${project_id}/documents`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data;
 }
 
 export async function createDocuments(token, files, project_id) {
@@ -14,28 +13,21 @@ export async function createDocuments(token, files, project_id) {
     formData.append("documents", file);
   });
 
-  const response = await fetch(
-    `http://localhost:5000/api/projects/${project_id}/documents`,
+  const { data } = await instance.post(
+    `/projects/${project_id}/documents`,
+    formData,
     {
-      method: "POST",
       headers: {
+        "Content-Type": "multipart/form-data",
         Authorization: `Bearer ${token}`,
       },
-      body: formData,
     },
   );
-
-  return response.json();
+  return data;
 }
 
 export async function deleteDocument(token, id, project_id) {
-  return fetch(
-    `http://localhost:5000/api/projects/${project_id}/documents/${id}`,
-    {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  );
+  return await instance.delete(`/projects/${project_id}/documents/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
 }

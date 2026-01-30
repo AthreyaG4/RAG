@@ -2,14 +2,15 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { ChevronDown, ChevronRight, Trash2, FileText } from "lucide-react";
+import { useDocuments } from "../hooks/useDocuments";
+import { useUI } from "../hooks/useUI";
+import { useProjects } from "../hooks/useProjects";
 
-export function ViewKnowledgeBaseModal({
-  documents,
-  deleteDocument,
-  isOpen,
-  onClose,
-  onKnowledgeBaseEmpty,
-}) {
+export function ViewKnowledgeBaseModal() {
+  const { isViewKnowledgeBaseOpen, setIsViewKnowledgeBaseOpen } = useUI();
+  const { documents, deleteDocument } = useDocuments();
+  const { selectedProjectId, markProjectCreated } = useProjects();
+
   const [expandedDocs, setExpandedDocs] = useState({});
 
   const toggleExpanded = (docId) => {
@@ -23,13 +24,20 @@ export function ViewKnowledgeBaseModal({
     const newDocs = documents.filter((doc) => doc.id !== docId);
     await deleteDocument(docId);
     if (newDocs.length === 0) {
-      onClose();
-      onKnowledgeBaseEmpty?.();
+      setIsViewKnowledgeBaseOpen(false);
+      if (selectedProjectId) {
+        markProjectCreated(selectedProjectId);
+      }
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog
+      open={isViewKnowledgeBaseOpen}
+      onOpenChange={() => {
+        setIsViewKnowledgeBaseOpen(false);
+      }}
+    >
       <DialogContent className="flex max-h-[80vh] max-w-2xl flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Knowledge Base Documents</DialogTitle>

@@ -2,14 +2,20 @@ import { useState, useRef } from "react";
 import { X, Upload, FileText, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { cn } from "../lib/utils";
+import { useUI } from "../hooks/useUI";
+import { useDocuments } from "../hooks/useDocuments";
+import { useProjects } from "../hooks/useProjects";
 
-export function UploadModal({ isOpen, onClose, onUpload, createDocuments }) {
+export function UploadModal() {
   const [files, setFiles] = useState([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
-  if (!isOpen) return null;
+  const { isUploadModalOpen, setIsUploadModalOpen } = useUI();
+  const { createDocuments } = useDocuments();
+  const { selectedProjectId, markProjectUploaded } = useProjects();
+  if (!isUploadModalOpen) return null;
 
   const handleFileChange = (e) => {
     if (e.target.files) {
@@ -40,22 +46,25 @@ export function UploadModal({ isOpen, onClose, onUpload, createDocuments }) {
   const handleUpload = async () => {
     if (files.length === 0) return;
     setIsUploading(true);
+    if (!selectedProjectId) {
+      setIsUploadModalOpen(false);
+      return;
+    }
 
-    await onUpload(files);
+    await createDocuments(files);
+
+    markProjectUploaded(selectedProjectId);
+
+    setIsUploadModalOpen(false);
     setFiles([]);
     setIsUploading(false);
-  };
-
-  const handleClose = () => {
-    setFiles([]);
-    onClose();
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
         className="bg-foreground/20 absolute inset-0 backdrop-blur-sm"
-        onClick={handleClose}
+        onClick={() => setIsUploadModalOpen(false)}
       />
       <div className="bg-card shadow-soft border-border animate-scale-in relative mx-4 w-full max-w-lg rounded-2xl border">
         <div className="border-border flex items-center justify-between border-b p-6">
@@ -63,7 +72,7 @@ export function UploadModal({ isOpen, onClose, onUpload, createDocuments }) {
             Upload Knowledge Base
           </h3>
           <button
-            onClick={handleClose}
+            onClick={() => setIsUploadModalOpen(false)}
             disabled={isUploading}
             className={cn(
               "hover:bg-muted transition-smooth flex h-8 w-8 items-center justify-center rounded-lg",
@@ -161,7 +170,11 @@ export function UploadModal({ isOpen, onClose, onUpload, createDocuments }) {
         </div>
 
         <div className="border-border flex items-center justify-end gap-3 border-t p-6">
-          <Button variant="ghost" onClick={handleClose} disabled={isUploading}>
+          <Button
+            variant="ghost"
+            onClick={() => setIsUploadModalOpen(false)}
+            disabled={isUploading}
+          >
             Cancel
           </Button>
           <Button

@@ -1,7 +1,9 @@
 import { FolderPlus, Sparkles } from "lucide-react";
 import { Button } from "./ui/button";
+import { useUI } from "../hooks/useUI";
 
-export function EmptyState({ onNewProject }) {
+export function EmptyState() {
+  const { setIsNewProjectModalOpen } = useUI();
   return (
     <div className="animate-fade-in flex flex-1 items-center justify-center p-8">
       <div className="w-full max-w-md space-y-8 text-center">
@@ -19,7 +21,7 @@ export function EmptyState({ onNewProject }) {
         </div>
 
         <Button
-          onClick={onNewProject}
+          onClick={() => setIsNewProjectModalOpen(true)}
           variant="upload"
           size="xl"
           className="w-full"
