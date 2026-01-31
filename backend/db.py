@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 from config import settings
 
@@ -20,6 +20,24 @@ Base = declarative_base()
 def init_db():
     Base.metadata.create_all(bind=engine)
     print("Tables created")
+
+    with engine.connect() as conn:
+        conn.execute(
+            text("""
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_trigger WHERE tgname = 'chunks_search_vector_trigger'
+                ) THEN
+                    CREATE TRIGGER chunks_search_vector_trigger
+                    BEFORE INSERT OR UPDATE ON chunks
+                    FOR EACH ROW EXECUTE FUNCTION chunks_search_vector_update();
+                END IF;
+            END $$;
+        """)
+        )
+        conn.commit()
+    print("Trigger created")
 
 
 def get_db():

@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, DateTime, ForeignKey, Integer, Boolean
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Index
+from sqlalchemy.dialects.postgresql import UUID, TSVECTOR
 from sqlalchemy.orm import relationship, mapped_column
 from datetime import datetime
 import uuid
@@ -73,6 +74,7 @@ class Chunk(Base):
     status = Column(String, nullable=False, default="created")
     summarised_content = Column(String, nullable=True)
     embedding = mapped_column(VECTOR(384))
+    search_vector = Column(TSVECTOR, nullable=True)
     has_text = Column(Boolean, nullable=True)
     has_image = Column(Boolean, nullable=True)
     has_table = Column(Boolean, nullable=True)
@@ -84,6 +86,10 @@ class Chunk(Base):
 
     document = relationship("Document", back_populates="chunks")
     images = relationship("Image", back_populates="chunk", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        Index("ix_chunks_search_vector", "search_vector", postgresql_using="gin"),
+    )
 
 
 class Image(Base):

@@ -16,6 +16,7 @@ import requests
 from config import settings
 import json
 from litellm import completion, embedding
+from sqlalchemy import func
 
 
 route = APIRouter(prefix="/api/projects/{project_id}/messages", tags=["messages"])
@@ -78,12 +79,12 @@ async def create_message(
     db.commit()
     db.refresh(user_message)
 
-    embed_resp = requests.post(
-        f"{GPU_SERVICE_URL}/embed",
-        headers={"Authorization": f"Bearer {HF_ACCESS_TOKEN}"},
-        json={"summarized_text": message.content},
-        timeout=100,
-    )
+    # embed_resp = requests.post(
+    #     f"{GPU_SERVICE_URL}/embed",
+    #     headers={"Authorization": f"Bearer {HF_ACCESS_TOKEN}"},
+    #     json={"summarized_text": message.content},
+    #     timeout=100,
+    # )
 
     embed_resp = embedding(
         model="text-embedding-3-small", input=message.content, dimensions=384
@@ -91,17 +92,30 @@ async def create_message(
 
     message_embedding = embed_resp.data[0]["embedding"]
 
-    chunks = (
+    vector_retrieved_chunks = (
         db.query(Chunk)
         .filter(Chunk.project_id == project_id)
         .order_by(Chunk.embedding.cosine_distance(message_embedding))
-        .limit(3)
+        .limit(2)
         .all()
     )
 
+    # ts_query = func.plainto_tsquery("english", message.content)
+    ts_query = func.plainto_tsquery("english", message.content)
+
+    bm25_retrieved_chunks = (
+        db.query(Chunk)
+        .filter(Chunk.project_id == project_id)
+        .filter(Chunk.search_vector.op("@@")(ts_query))
+        .order_by(func.ts_rank_cd(Chunk.search_vector, ts_query).desc())
+        .limit(5)
+        .all()
+    )
+
+    print(bm25_retrieved_chunks)
     context_blocks = []
 
-    for i, chunk in enumerate(chunks, start=1):
+    for i, chunk in enumerate(vector_retrieved_chunks, start=1):
         context_blocks.append(f"[{i}]\n{chunk.summarised_content.strip()}")
 
     context = "\n\n".join(context_blocks)
@@ -165,8 +179,10 @@ async def create_message(
             assistant_message.content = answer_text
 
             for chunk_index in citations:
-                if isinstance(chunk_index, int) and 1 <= chunk_index <= len(chunks):
-                    chunk = chunks[chunk_index - 1]
+                if isinstance(chunk_index, int) and 1 <= chunk_index <= len(
+                    vector_retrieved_chunks
+                ):
+                    chunk = vector_retrieved_chunks[chunk_index - 1]
                     document = (
                         db.query(Document)
                         .filter(Document.id == chunk.document_id)

@@ -1,13 +1,16 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   FileText,
   CheckCircle2,
   AlertCircle,
+  X,
   Upload,
   Play,
-  X,
+  ChevronDown,
+  Settings2,
 } from "lucide-react";
 import { Button } from "./ui/button";
+import { Switch } from "./ui/switch.jsx";
 import { cn } from "../lib/utils";
 import {
   Dialog,
@@ -48,6 +51,10 @@ export function DocumentUploadStatus({ onAllFilesRemoved }) {
   const hasSuccessfulUploads = uploadedCount > 0;
 
   const [documentToRemove, setDocumentToRemove] = useState(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [hybridSearch, setHybridSearch] = useState(false);
+  const [graphSearch, setGraphSearch] = useState(false);
+  const [reranking, setReranking] = useState(true);
 
   const handleRemoveFile = (doc) => {
     setDocumentToRemove(doc);
@@ -76,7 +83,6 @@ export function DocumentUploadStatus({ onAllFilesRemoved }) {
         )}
       >
         <div className="w-full max-w-xl">
-          {/* Header */}
           <div className="mb-10 text-center">
             <div className="bg-primary/10 mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl">
               <FileText className="text-primary h-8 w-8" />
@@ -96,7 +102,6 @@ export function DocumentUploadStatus({ onAllFilesRemoved }) {
             </p>
           </div>
 
-          {/* File List */}
           <div className="bg-card/50 border-border/50 mb-6 overflow-hidden rounded-2xl border backdrop-blur-sm">
             <div className="divide-border/50 max-h-80 divide-y overflow-y-auto">
               {documents?.map((doc) => {
@@ -107,7 +112,6 @@ export function DocumentUploadStatus({ onAllFilesRemoved }) {
                     key={doc.id}
                     className="hover:bg-muted/30 group flex items-center gap-3 px-4 py-3 transition-colors"
                   >
-                    {/* Status Icon */}
                     <div
                       className={cn(
                         "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
@@ -118,12 +122,12 @@ export function DocumentUploadStatus({ onAllFilesRemoved }) {
                       {status === "uploaded" && (
                         <CheckCircle2 className="h-4 w-4 text-green-500" />
                       )}
+
                       {status === "failed" && (
                         <AlertCircle className="text-destructive h-4 w-4" />
                       )}
                     </div>
 
-                    {/* File Info */}
                     <div className="min-w-0 flex-1">
                       <p className="text-foreground truncate text-sm font-medium">
                         {doc.filename}
@@ -133,19 +137,18 @@ export function DocumentUploadStatus({ onAllFilesRemoved }) {
                       </p>
                     </div>
 
-                    {/* Status Badge */}
                     {status === "uploaded" && (
                       <span className="rounded-full bg-green-500/10 px-2 py-1 text-xs font-medium text-green-600 dark:text-green-400">
                         Ready
                       </span>
                     )}
+
                     {status === "failed" && (
                       <span className="bg-destructive/10 text-destructive rounded-full px-2 py-1 text-xs font-medium">
                         Failed
                       </span>
                     )}
 
-                    {/* Remove Button */}
                     <button
                       onClick={() => handleRemoveFile(doc)}
                       className="hover:bg-destructive/10 text-muted-foreground hover:text-destructive flex h-7 w-7 items-center justify-center rounded-lg opacity-0 transition-all group-hover:opacity-100"
@@ -159,7 +162,6 @@ export function DocumentUploadStatus({ onAllFilesRemoved }) {
             </div>
           </div>
 
-          {/* Warming Indicator */}
           <WarmingIndicator
             showModel={true}
             showWorkers={true}
@@ -167,7 +169,6 @@ export function DocumentUploadStatus({ onAllFilesRemoved }) {
             className="mb-6"
           />
 
-          {/* Actions */}
           <div className="flex items-center justify-center gap-3">
             <Button
               variant="outline"
@@ -204,6 +205,75 @@ export function DocumentUploadStatus({ onAllFilesRemoved }) {
                 {modelReady ? "Start Processing" : "Waiting..."}
               </Button>
             )}
+          </div>
+
+          <div className="mt-6">
+            <button
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className="text-muted-foreground hover:text-foreground group mx-auto flex items-center gap-2 text-sm transition-colors"
+            >
+              <Settings2 className="h-4 w-4" />
+              <span>Advanced Options</span>
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 transition-transform duration-200",
+                  showAdvanced && "rotate-180",
+                )}
+              />
+            </button>
+
+            <div
+              className={cn(
+                "overflow-hidden transition-all duration-300 ease-out",
+                showAdvanced
+                  ? "mt-4 max-h-75 opacity-100"
+                  : "max-h-0 opacity-0",
+              )}
+            >
+              <div className="bg-card/50 border-border/50 space-y-4 rounded-xl border p-4 backdrop-blur-sm">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-foreground text-sm font-medium">
+                      Hybrid Search
+                    </p>
+                    <p className="text-muted-foreground text-xs">
+                      Combine semantic and keyword search for better results
+                    </p>
+                  </div>
+                  <Switch
+                    checked={hybridSearch}
+                    onCheckedChange={setHybridSearch}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-foreground text-sm font-medium">
+                      Graph Search
+                    </p>
+                    <p className="text-muted-foreground text-xs">
+                      Enable knowledge graph traversal for connected insights
+                    </p>
+                  </div>
+                  <Switch
+                    checked={graphSearch}
+                    onCheckedChange={setGraphSearch}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-foreground text-sm font-medium">
+                      Reranking
+                    </p>
+                    <p className="text-muted-foreground text-xs">
+                      Apply cross-encoder reranking for improved relevance
+                    </p>
+                  </div>
+                  <Switch checked={reranking} onCheckedChange={setReranking} />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
