@@ -39,30 +39,33 @@ def process_chunk(self, chunk_id: str):
             .first()
         )
 
-        images = db.query(Image).filter(Image.chunk_id == chunk.id).all()
+        # images = db.query(Image).filter(Image.chunk_id == chunk.id).all()
 
-        if len(images) != 0:
-            image_urls = get_presigned_urls_for_chunk_images(
-                images=images,
-                expires_in=900,
-            )
+        # if len(images) != 0:
+        #     image_urls = get_presigned_urls_for_chunk_images(
+        #         images=images,
+        #         expires_in=900,
+        #     )
 
-            summarize_resp = requests.post(
-                f"{GPU_SERVICE_URL}/summarize",
-                headers={"Authorization": f"Bearer {HF_ACCESS_TOKEN}"},
-                json={
-                    "chunk_text": chunk.content,
-                    "image_urls": image_urls,
-                },
-                timeout=500,
-            )
-            summarize_resp.raise_for_status()
+        #     summarize_resp = requests.post(
+        #         f"{GPU_SERVICE_URL}/summarize",
+        #         headers={"Authorization": f"Bearer {HF_ACCESS_TOKEN}"},
+        #         json={
+        #             "chunk_text": chunk.content,
+        #             "image_urls": image_urls,
+        #         },
+        #         timeout=500,
+        #     )
+        #     summarize_resp.raise_for_status()
 
-            summarized_text = summarize_resp.json()["summary_text"]
-            chunk.summarised_content = summarized_text
-        else:
-            chunk.summarised_content = chunk.content
-            summarized_text = chunk.content
+        #     summarized_text = summarize_resp.json()["summary_text"]
+        #     chunk.summarised_content = summarized_text
+        # else:
+        #     chunk.summarised_content = chunk.content
+        #     summarized_text = chunk.content
+
+        chunk.summarised_content = chunk.content
+        summarized_text = chunk.content
 
         chunk.status = "summarized"
         document.chunks_summarized += 1

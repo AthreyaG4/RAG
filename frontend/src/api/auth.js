@@ -1,4 +1,4 @@
-import instance from "./instance";
+import instance from "./axiosInstance";
 
 export async function loginUser({ email, password }) {
   const formData = new URLSearchParams();

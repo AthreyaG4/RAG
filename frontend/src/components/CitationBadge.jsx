@@ -1,7 +1,7 @@
 import { FileText } from "lucide-react";
 import { cn } from "../lib/utils";
 
-export function CitationBadge({ citation, index, onClick, isActive }) {
+export function CitationBadge({ citation, onClick, isActive }) {
   return (
     <button
       onClick={onClick}
@@ -14,14 +14,14 @@ export function CitationBadge({ citation, index, onClick, isActive }) {
       )}
     >
       <FileText className="h-3 w-3" />
-      <span className="max-w-30 truncate">{citation.documentName}</span>
+      <span className="max-w-30 truncate">{citation.document_name}</span>
       <span
         className={cn(
           "rounded px-1.5 py-0.5 text-[10px] font-semibold",
           isActive ? "bg-primary-foreground/20" : "bg-primary/10 text-primary",
         )}
       >
-        p.{citation.pageNumber}
+        p.{citation.page_number}
       </span>
     </button>
   );

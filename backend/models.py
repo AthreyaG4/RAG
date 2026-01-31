@@ -17,7 +17,9 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     email = Column(String, unique=True, nullable=False)
 
-    projects = relationship("Project", back_populates="user")
+    projects = relationship(
+        "Project", back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class Project(Base):
@@ -81,7 +83,7 @@ class Chunk(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     document = relationship("Document", back_populates="chunks")
-    images = relationship("Image", back_populates="chunk")
+    images = relationship("Image", back_populates="chunk", cascade="all, delete-orphan")
 
 
 class Image(Base):
@@ -107,14 +109,25 @@ class Message(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     project = relationship("Project", back_populates="messages")
+    citations = relationship(
+        "Citation",
+        back_populates="message",
+        cascade="all, delete-orphan",
+    )
 
-class Source(Base):
-    __tablename__ = "sources"
+
+class Citation(Base):
+    __tablename__ = "citations"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    message_id = Column(UUID(as_uuid=True), ForeignKey("messages.id"))
+    message_id = Column(UUID(as_uuid=True), ForeignKey("messages.id"), nullable=False)
     document_name = Column(String, nullable=False)
     document_s3_key = Column(String, nullable=False)
     page_number = Column(Integer, nullable=False)
 
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    message = relationship(
+        "Message",
+        back_populates="citations",
+    )

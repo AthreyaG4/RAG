@@ -1,6 +1,6 @@
 import { createContext, useEffect, useState } from "react";
 import * as api from "../api/auth";
-import { setLogoutCallback } from "../api/instance";
+import { setLogoutCallback } from "../lib/authEvents";
 
 export const AuthContext = createContext(null);
 

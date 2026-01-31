@@ -29,7 +29,6 @@ async def login_for_access_token(
     username = form_data.username
     password = form_data.password
 
-    print("HERE")
     user = authenticate_user(db, username, password)
 
     if not user:

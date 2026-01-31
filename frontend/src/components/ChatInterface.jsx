@@ -7,12 +7,12 @@ import { CitationViewer } from "../components/CitationViewer";
 import { CitationBadge } from "../components/CitationBadge";
 import { useUI } from "../hooks/useUI";
 import { useProjects } from "../hooks/useProjects";
-import { useHealth } from "../hooks/useHealth";
 
 export function ChatInterface() {
-  const { messages, loading, createMessage } = useMessages();
+  const { messages, isWaitingForStream, isStreaming, createMessage } =
+    useMessages();
   const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+
   const [activeCitation, setActiveCitation] = useState(null);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -21,11 +21,6 @@ export function ChatInterface() {
   const { isSidebarOpen } = useUI();
 
   const projectName = selectedProject ? selectedProject.name : "Loading...";
-  const { health: systemHealth } = useHealth();
-
-  const modelReady = systemHealth
-    ? systemHealth.services.gpu_service == "healthy"
-    : false;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -37,7 +32,7 @@ export function ChatInterface() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!input.trim() || loading) return;
+    if (!input.trim() || isStreaming || isWaitingForStream) return;
 
     setInput("");
     await createMessage(input.trim());
@@ -121,11 +116,10 @@ export function ChatInterface() {
                     {/* Citations */}
                     {message.citations && message.citations.length > 0 && (
                       <div className="flex flex-wrap gap-2 pl-1">
-                        {message.citations.map((citation, citIndex) => (
+                        {message.citations.map((citation) => (
                           <CitationBadge
                             key={citation.id}
                             citation={citation}
-                            index={citIndex}
                             onClick={() => handleCitationClick(citation)}
                             isActive={activeCitation?.id === citation.id}
                           />
@@ -140,7 +134,7 @@ export function ChatInterface() {
                   )}
                 </div>
               ))}
-              {isLoading && (
+              {isWaitingForStream && (
                 <div className="animate-fade-in flex gap-4">
                   <div className="bg-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
                     <Bot className="text-primary-foreground h-4 w-4" />
@@ -157,7 +151,7 @@ export function ChatInterface() {
 
         <div className="border-border bg-card/50 border-t p-4 backdrop-blur-sm">
           <form onSubmit={handleSubmit} className="mx-auto max-w-3xl">
-            <div className="relative flex items-end gap-2">
+            <div className="relative flex items-start gap-2">
               <div className="relative flex-1">
                 <textarea
                   ref={inputRef}
@@ -181,11 +175,8 @@ export function ChatInterface() {
               <Button
                 type="submit"
                 size="icon"
-                disabled={!input.trim() || isLoading || !modelReady}
-                className={cn(
-                  "h-12 w-12 shrink-0 rounded-xl",
-                  !modelReady && "cursor-not-allowed opacity-50",
-                )}
+                disabled={!input.trim() || isStreaming || isWaitingForStream}
+                className={cn("h-12 w-12 shrink-0 rounded-xl")}
               >
                 <Send className="h-4 w-4" />
               </Button>

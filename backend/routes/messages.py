@@ -1,16 +1,21 @@
+import asyncio
 import traceback
 from fastapi import Depends, APIRouter, HTTPException, status
 from fastapi.responses import StreamingResponse
-from schemas import MessageCreateRequest, MessageResponse, SourceResponse
+from schemas import (
+    MessageCreateRequest,
+    MessageResponse,
+    OpenAIResponse,
+)
 from db import get_db
-from models import User, Project, Message, Chunk, Document, Source
+from models import User, Project, Message, Chunk, Document, Citation
 from sqlalchemy.orm import Session
 from uuid import UUID
 from security.jwt import get_current_active_user
 import requests
 from config import settings
 import json
-from litellm import acompletion, embedding
+from litellm import completion, embedding
 
 
 route = APIRouter(prefix="/api/projects/{project_id}/messages", tags=["messages"])
@@ -122,75 +127,63 @@ async def create_message(
     db.refresh(assistant_message)
 
     async def stream():
-        full_response = []
-
         try:
-            response = await acompletion(
+            response = completion(
                 model="gpt-5-nano",
-                max_tokens=1000,
+                max_tokens=2000,
                 reasoning_effort="low",
                 messages=[
                     {
                         "role": "system",
                         "content": """
-                            Answer the user's question based on the retrieved context from the documents. If the context does not provide enough information, respond with "I don't know". 
-                            Be concise and to the point.
+                            Answer using ONLY the provided context chunks.
 
-                            Answer:
-                            <Your answer here>
-
-                            Sources:
-                            <List of sources used in single line separated by a comma.>.
-                            """,
+                            Rules:
+                            - Cite ONLY the chunk numbers you actually used.
+                            - Every factual claim must be supported by a cited chunk.
+                            - Do NOT guess or default to chunk 1.
+                            - If the answer is not supported by the context, respond "I don't know".
+                        """,
                     },
-                    {"content": prompt, "role": "user"},
+                    {"role": "user", "content": prompt},
                 ],
-                stream=True,
+                response_format=OpenAIResponse,
+                stream=False,
             )
 
-            async for chunk in response:
-                if hasattr(chunk, "choices") and len(chunk.choices) > 0:
-                    delta = chunk.choices[0].delta
+            response_json = OpenAIResponse.model_validate_json(
+                response.choices[0].message.content
+            )
 
-                    if hasattr(delta, "content") and delta.content:
-                        content = delta.content
-                        full_response.append(content)
+            answer_text = response_json.answer
+            citations = response_json.citations
 
-                        yield f"data: {json.dumps({'content': content})}\n\n"
+            for char in answer_text:
+                yield f"data: {json.dumps({'content': char})}\n\n"
+                await asyncio.sleep(0.01)
 
-            assistant_message.content = "".join(full_response)
+            assistant_message.content = answer_text
 
-            # sources = assistant_message.content.split("Sources:")[1].strip()
-            # sources_list = sources.split(",") if sources else []
-            # print(sources_list)
-            # for source in sources_list:
-            #     source = source.strip().strip("[]")
-            #     if source.isdigit():
-            #         chunk_index = int(source) - 1
-            #         print(chunk_index)
-            #         print(chunks[chunk_index].page_number)
-            #         chunk = chunks[chunk_index]
-            #         page_number = chunk.page_number
-            #         document = (
-            #             db.query(Document)
-            #             .filter(Document.id == chunk.document_id)
-            #             .first()
-            #         )
-            #         document_name = document.filename
-            #         document_s3_key = document.s3_key
+            for chunk_index in citations:
+                if isinstance(chunk_index, int) and 1 <= chunk_index <= len(chunks):
+                    chunk = chunks[chunk_index - 1]
+                    document = (
+                        db.query(Document)
+                        .filter(Document.id == chunk.document_id)
+                        .first()
+                    )
 
-            #         source_entry = Source(
-            #             document_name=document_name,
-            #             document_s3_key=document_s3_key,
-            #             page_number=page_number,
-            #             message_id=assistant_message.id,
-            #         )
-
-            #         db.add(source_entry)
-            #         db.commit()
-            #         db.refresh(source_entry)
+                    if document:
+                        citation_entry = Citation(
+                            document_name=document.filename,
+                            document_s3_key=document.s3_key,
+                            page_number=chunk.page_number,
+                            message_id=assistant_message.id,
+                        )
+                        db.add(citation_entry)
 
             db.commit()
+            db.refresh(assistant_message)
 
             yield f"data: {json.dumps({'done': True})}\n\n"
 

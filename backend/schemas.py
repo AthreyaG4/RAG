@@ -118,13 +118,14 @@ class MessageResponse(BaseModel):
     role: str
     content: str
     created_at: datetime
-    sources: List["SourceResponse"] = []
+    citations: List["CitationResponse"] = []
 
     class Config:
         from_attributes = True
 
 
-class SourceResponse(BaseModel):
+class CitationResponse(BaseModel):
+    id: UUID
     document_name: str
     document_s3_key: str
     page_number: int
@@ -132,4 +133,4 @@ class SourceResponse(BaseModel):
 
 class OpenAIResponse(BaseModel):
     answer: str
-    sources: List[str]
+    citations: List[int]

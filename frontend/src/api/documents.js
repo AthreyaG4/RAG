@@ -1,4 +1,4 @@
-import instance from "./instance";
+import instance from "./axiosInstance.js";
 
 export async function getDocuments(token, project_id) {
   const { data } = await instance.get(`/projects/${project_id}/documents`, {
