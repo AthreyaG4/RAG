@@ -20,10 +20,6 @@ class ProjectCreateRequest(BaseModel):
     name: str
 
 
-class ChunkCreateRequest(BaseModel):
-    content: str
-
-
 class MessageCreateRequest(BaseModel):
     role: str
     content: str

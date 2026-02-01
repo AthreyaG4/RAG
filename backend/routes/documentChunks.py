@@ -1,5 +1,5 @@
 from fastapi import Depends, APIRouter, HTTPException, status
-from schemas import ChunkCreateRequest, ChunkResponse
+from schemas import ChunkResponse
 from db import get_db
 from models import User, Document, Chunk
 from sqlalchemy.orm import Session

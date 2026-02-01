@@ -44,5 +44,8 @@ class Settings(BaseSettings):
     # OpenAI
     OPENAI_API_KEY: str
 
+    # Cohere
+    COHERE_API_KEY: str
+
 
 settings = Settings()  # type: ignore

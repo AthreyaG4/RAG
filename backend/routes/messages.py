@@ -17,7 +17,8 @@ from config import settings
 import json
 from litellm import completion, embedding
 from sqlalchemy import func
-
+from utils.rrf import reciprocal_rank_fusion
+from utils.reranker import reranker
 
 route = APIRouter(prefix="/api/projects/{project_id}/messages", tags=["messages"])
 
@@ -96,11 +97,10 @@ async def create_message(
         db.query(Chunk)
         .filter(Chunk.project_id == project_id)
         .order_by(Chunk.embedding.cosine_distance(message_embedding))
-        .limit(2)
+        .limit(20)
         .all()
     )
 
-    # ts_query = func.plainto_tsquery("english", message.content)
     ts_query = func.plainto_tsquery("english", message.content)
 
     bm25_retrieved_chunks = (
@@ -108,14 +108,28 @@ async def create_message(
         .filter(Chunk.project_id == project_id)
         .filter(Chunk.search_vector.op("@@")(ts_query))
         .order_by(func.ts_rank_cd(Chunk.search_vector, ts_query).desc())
-        .limit(5)
+        .limit(20)
         .all()
     )
 
     print(bm25_retrieved_chunks)
+
+    fused_chunks = reciprocal_rank_fusion(
+        [
+            vector_retrieved_chunks,
+            bm25_retrieved_chunks,
+        ],
+    )
+
+    print(fused_chunks)
+
+    reranked_chunks = reranker(message.content, fused_chunks)
+
+    print(reranked_chunks)
+
     context_blocks = []
 
-    for i, chunk in enumerate(vector_retrieved_chunks, start=1):
+    for i, chunk in enumerate(reranked_chunks, start=1):
         context_blocks.append(f"[{i}]\n{chunk.summarised_content.strip()}")
 
     context = "\n\n".join(context_blocks)
