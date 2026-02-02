@@ -12,7 +12,6 @@ from models import User, Project, Message, Chunk, Document, Citation
 from sqlalchemy.orm import Session
 from uuid import UUID
 from security.jwt import get_current_active_user
-from config import settings
 import json
 from litellm import completion, embedding
 from sqlalchemy import func
@@ -23,9 +22,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 route = APIRouter(prefix="/api/projects/{project_id}/messages", tags=["messages"])
-
-GPU_SERVICE_URL = settings.GPU_SERVICE_URL
-HF_ACCESS_TOKEN = settings.HF_ACCESS_TOKEN
 
 
 @route.get("/", response_model=list[MessageResponse])

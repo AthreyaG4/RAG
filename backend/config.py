@@ -32,12 +32,6 @@ class Settings(BaseSettings):
     # Llama Parse
     LLAMA_PARSE_API_KEY: str
 
-    # HuggingFace
-    HF_ACCESS_TOKEN: str
-
-    # GPU Service
-    GPU_SERVICE_URL: str
-
     # OpenAI
     OPENAI_API_KEY: str
 

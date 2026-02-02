@@ -2,13 +2,8 @@ from celery_app import celery_app
 from db import SessionLocal
 from models import Document, Chunk, Project, Image
 from uuid import UUID
-import requests
-from config import settings
 from utils.s3 import get_presigned_urls_for_chunk_images
-from litellm import embedding
-
-HF_ACCESS_TOKEN = settings.HF_ACCESS_TOKEN
-GPU_SERVICE_URL = settings.GPU_SERVICE_URL
+from litellm import embedding, completion
 
 
 @celery_app.task(
@@ -39,43 +34,59 @@ def process_chunk(self, chunk_id: str):
             .first()
         )
 
-        # images = db.query(Image).filter(Image.chunk_id == chunk.id).all()
+        images = db.query(Image).filter(Image.chunk_id == chunk.id).all()
 
-        # if len(images) != 0:
-        #     image_urls = get_presigned_urls_for_chunk_images(
-        #         images=images,
-        #         expires_in=900,
-        #     )
+        if len(images) != 0:
+            image_urls = get_presigned_urls_for_chunk_images(
+                images=images,
+                expires_in=900,
+            )
 
-        #     summarize_resp = requests.post(
-        #         f"{GPU_SERVICE_URL}/summarize",
-        #         headers={"Authorization": f"Bearer {HF_ACCESS_TOKEN}"},
-        #         json={
-        #             "chunk_text": chunk.content,
-        #             "image_urls": image_urls,
-        #         },
-        #         timeout=500,
-        #     )
-        #     summarize_resp.raise_for_status()
+            messages = [
+                {
+                    "role": "system",
+                    "content": """
+                        Task: Create a brief, searchable summary (under 500 words total).
 
-        #     summarized_text = summarize_resp.json()["summary_text"]
-        #     chunk.summarised_content = summarized_text
-        # else:
-        #     chunk.summarised_content = chunk.content
-        #     summarized_text = chunk.content
+                        Structure:
+                        **Overview:** 2 sentences - what this is about
+                        **Facts:** Bullet list - key details only  
+                        **Visual:** 2 sentences - image description
+                        **Questions:** List 4-5 questions (no answers)
+                        **Keywords:** 15-20 search terms
 
-        chunk.summarised_content = chunk.content
-        summarized_text = chunk.content
+                        Be concise and avoid repetition.
+                    """,
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": chunk.content},
+                        *[
+                            {"type": "image_url", "image_url": url}
+                            for url in image_urls
+                        ],
+                    ],
+                },
+            ]
+
+            response = completion(
+                model="gpt-5-mini",
+                max_tokens=2000,
+                reasoning_effort="low",
+                messages=messages,
+                stream=False,
+            )
+
+            summarized_text = response.choices[0].message.content
+
+            chunk.summarised_content = summarized_text + "\n\n" + chunk.content
+        else:
+            chunk.summarised_content = chunk.content
+            summarized_text = chunk.content
 
         chunk.status = "summarized"
         document.chunks_summarized += 1
-
-        # embed_resp = requests.post(
-        #     f"{GPU_SERVICE_URL}/embed",
-        #     headers={"Authorization": f"Bearer {HF_ACCESS_TOKEN}"},
-        #     json={"summarized_text": summarized_text},
-        #     timeout=100,
-        # )
 
         embed_resp = embedding(
             model="text-embedding-3-small", input=summarized_text, dimensions=384
