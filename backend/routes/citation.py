@@ -13,7 +13,7 @@ route = APIRouter(
 
 
 @route.get("/{citation_id}/view", response_model=CitationViewResponse)
-async def view_citation(
+def view_citation(
     project_id,
     message_id,
     citation_id,

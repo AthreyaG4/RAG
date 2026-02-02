@@ -29,7 +29,7 @@ HF_ACCESS_TOKEN = settings.HF_ACCESS_TOKEN
 
 
 @route.get("/", response_model=list[MessageResponse])
-async def list_messages(
+def list_messages(
     project_id: UUID,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
@@ -54,7 +54,7 @@ async def list_messages(
 
 
 @route.post("/")
-async def create_message(
+def create_message(
     project_id: UUID,
     message: MessageCreateRequest,
     current_user: User = Depends(get_current_active_user),

@@ -23,7 +23,7 @@ def authenticate_user(db: Session, username: str, password: str):
 
 
 @route.post("/", response_model=JWTToken)
-async def login_for_access_token(
+def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
 ):
     username = form_data.username

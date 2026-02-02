@@ -11,7 +11,7 @@ route = APIRouter(prefix="/api/projects/{project_id}/documents", tags=["document
 
 
 @route.get("/", response_model=list[DocumentResponse])
-async def list_documents(
+def list_documents(
     project_id: UUID,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
@@ -36,7 +36,7 @@ async def list_documents(
 
 
 @route.get("/{document_id}", response_model=DocumentResponse)
-async def get_document(
+def get_document(
     project_id: UUID,
     document_id: UUID,
     current_user: User = Depends(get_current_active_user),

@@ -195,6 +195,37 @@ async def delete_file_from_s3(s3_key: str):
         raise Exception(f"Failed to delete {s3_key} from S3: {str(e)}")
 
 
+async def delete_folder_from_s3(user_id: str, project_id: str):
+    if not user_id or not project_id:
+        return False
+
+    try:
+        prefix = f"uploads/{user_id}/{project_id}/"
+
+        paginator = s3_client.get_paginator("list_objects_v2")
+        pages = paginator.paginate(Bucket=S3_BUCKET, Prefix=prefix)
+
+        objects_to_delete = []
+        for page in pages:
+            if "Contents" in page:
+                for obj in page["Contents"]:
+                    objects_to_delete.append({"Key": obj["Key"]})
+
+        if objects_to_delete:
+            for i in range(0, len(objects_to_delete), 1000):
+                batch = objects_to_delete[i : i + 1000]
+                s3_client.delete_objects(Bucket=S3_BUCKET, Delete={"Objects": batch})
+
+            return True
+
+        return False
+
+    except Exception as e:
+        raise Exception(
+            f"Failed to delete project folder for project {project_id}: {str(e)}"
+        )
+
+
 def get_presigned_urls_for_chunk_images(
     images,
     expires_in: int = 900,

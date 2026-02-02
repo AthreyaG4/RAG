@@ -10,12 +10,12 @@ route = APIRouter(prefix="/api/users", tags=["users"])
 
 
 @route.get("/me", response_model=UserResponse)
-async def read_users_me(current_user: User = Depends(get_current_active_user)):
+def read_users_me(current_user: User = Depends(get_current_active_user)):
     return current_user
 
 
 @route.post("/", response_model=UserResponse)
-async def create_user(user: UserCreateRequest, db: Session = Depends(get_db)):
+def create_user(user: UserCreateRequest, db: Session = Depends(get_db)):
     existingUser = db.query(User).filter(User.username == user.username).first()
 
     if existingUser:
