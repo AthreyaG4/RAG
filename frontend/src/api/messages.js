@@ -9,7 +9,24 @@ export async function getMessages(token, project_id) {
   return data;
 }
 
-export async function createMessage(token, content, project_id) {
+export async function viewCitation(token, projectId, messageId, citationId) {
+  const { data } = await instance.get(
+    `/projects/${projectId}/messages/${messageId}/citations/${citationId}/view`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  );
+  return data;
+}
+
+export async function createMessage(
+  token,
+  content,
+  project_id,
+  hybridSearch,
+  graphSearch,
+  reranking,
+) {
   const response = await fetch(
     `${API_BASE_URL}/projects/${project_id}/messages`,
     {
@@ -18,7 +35,13 @@ export async function createMessage(token, content, project_id) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ role: "user", content }),
+      body: JSON.stringify({
+        role: "user",
+        content,
+        hybridSearch,
+        graphSearch,
+        reranking,
+      }),
     },
   );
 

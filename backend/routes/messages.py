@@ -12,18 +12,19 @@ from models import User, Project, Message, Chunk, Document, Citation
 from sqlalchemy.orm import Session
 from uuid import UUID
 from security.jwt import get_current_active_user
-import requests
 from config import settings
 import json
 from litellm import completion, embedding
 from sqlalchemy import func
 from utils.rrf import reciprocal_rank_fusion
 from utils.reranker import reranker
+import logging
+
+logger = logging.getLogger(__name__)
 
 route = APIRouter(prefix="/api/projects/{project_id}/messages", tags=["messages"])
 
 GPU_SERVICE_URL = settings.GPU_SERVICE_URL
-CHAT_SERVICE_URL = settings.CHAT_SERVICE_URL
 HF_ACCESS_TOKEN = settings.HF_ACCESS_TOKEN
 
 
@@ -59,6 +60,7 @@ async def create_message(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
+    logger.info(f"Message: {message}")
     project = (
         db.query(Project)
         .filter(Project.user_id == current_user.id, Project.id == project_id)
@@ -80,20 +82,13 @@ async def create_message(
     db.commit()
     db.refresh(user_message)
 
-    # embed_resp = requests.post(
-    #     f"{GPU_SERVICE_URL}/embed",
-    #     headers={"Authorization": f"Bearer {HF_ACCESS_TOKEN}"},
-    #     json={"summarized_text": message.content},
-    #     timeout=100,
-    # )
-
     embed_resp = embedding(
         model="text-embedding-3-small", input=message.content, dimensions=384
     )
 
     message_embedding = embed_resp.data[0]["embedding"]
 
-    vector_retrieved_chunks = (
+    candidates = (
         db.query(Chunk)
         .filter(Chunk.project_id == project_id)
         .order_by(Chunk.embedding.cosine_distance(message_embedding))
@@ -101,35 +96,38 @@ async def create_message(
         .all()
     )
 
-    ts_query = func.plainto_tsquery("english", message.content)
+    logger.info(f"Vector Retrieved Chunks: {len(candidates)}")
 
-    bm25_retrieved_chunks = (
-        db.query(Chunk)
-        .filter(Chunk.project_id == project_id)
-        .filter(Chunk.search_vector.op("@@")(ts_query))
-        .order_by(func.ts_rank_cd(Chunk.search_vector, ts_query).desc())
-        .limit(20)
-        .all()
-    )
+    if message.hybrid_search:
+        ts_query = func.plainto_tsquery("english", message.content)
 
-    print(bm25_retrieved_chunks)
+        bm25_candidates = (
+            db.query(Chunk)
+            .filter(Chunk.project_id == project_id)
+            .filter(Chunk.search_vector.op("@@")(ts_query))
+            .order_by(func.ts_rank_cd(Chunk.search_vector, ts_query).desc())
+            .limit(20)
+            .all()
+        )
 
-    fused_chunks = reciprocal_rank_fusion(
-        [
-            vector_retrieved_chunks,
-            bm25_retrieved_chunks,
-        ],
-    )
+        logger.info(f"BM25 Retrieved Chunks: {len(bm25_candidates)}")
 
-    print(fused_chunks)
+        candidates = reciprocal_rank_fusion([candidates, bm25_candidates])
 
-    reranked_chunks = reranker(message.content, fused_chunks)
+        logger.info(f"RRF Merged Chunks: {len(candidates)}")
 
-    print(reranked_chunks)
+    candidates = candidates[:10]
+
+    if message.reranking:
+        candidates = reranker(message.content, candidates)
+    else:
+        candidates = candidates[:3]
+
+    logger.info(f"Chunks after Reranking: {len(candidates)}")
 
     context_blocks = []
 
-    for i, chunk in enumerate(reranked_chunks, start=1):
+    for i, chunk in enumerate(candidates, start=1):
         context_blocks.append(f"[{i}]\n{chunk.summarised_content.strip()}")
 
     context = "\n\n".join(context_blocks)
@@ -193,10 +191,8 @@ async def create_message(
             assistant_message.content = answer_text
 
             for chunk_index in citations:
-                if isinstance(chunk_index, int) and 1 <= chunk_index <= len(
-                    vector_retrieved_chunks
-                ):
-                    chunk = vector_retrieved_chunks[chunk_index - 1]
+                if isinstance(chunk_index, int) and 1 <= chunk_index <= len(candidates):
+                    chunk = candidates[chunk_index - 1]
                     document = (
                         db.query(Document)
                         .filter(Document.id == chunk.document_id)
@@ -209,6 +205,7 @@ async def create_message(
                             document_s3_key=document.s3_key,
                             page_number=chunk.page_number,
                             message_id=assistant_message.id,
+                            total_pages=len(document.chunks),
                         )
                         db.add(citation_entry)
 

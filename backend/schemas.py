@@ -1,7 +1,12 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from uuid import UUID
 from datetime import datetime
 from typing import List
+
+
+def to_camel(string: str) -> str:
+    parts = string.split("_")
+    return parts[0] + "".join(word.capitalize() for word in parts[1:])
 
 
 class UserCreateRequest(BaseModel):
@@ -23,6 +28,14 @@ class ProjectCreateRequest(BaseModel):
 class MessageCreateRequest(BaseModel):
     role: str
     content: str
+    hybrid_search: bool | None = False
+    graph_search: bool | None = False
+    reranking: bool | None = False
+
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+    )
 
 
 class ProjectUpdateRequest(BaseModel):
@@ -46,7 +59,6 @@ class ProjectResponse(BaseModel):
     name: str
     status: str
     created_at: datetime
-    messages: List["MessageResponse"] = []
 
     class Config:
         from_attributes = True
@@ -58,7 +70,6 @@ class DocumentResponse(BaseModel):
     filename: str
     created_at: datetime
     status: str
-    s3_key: str | None = None
     chunks: List["ChunkResponse"] = []
 
     class Config:
@@ -104,7 +115,6 @@ class ChunkResponse(BaseModel):
 class ImageResponse(BaseModel):
     id: UUID
     chunk_id: UUID
-    s3_key: str | None = None
     created_at: datetime
 
 
@@ -123,8 +133,13 @@ class MessageResponse(BaseModel):
 class CitationResponse(BaseModel):
     id: UUID
     document_name: str
-    document_s3_key: str
     page_number: int
+    message_id: UUID
+    total_pages: int
+
+
+class CitationViewResponse(BaseModel):
+    url: str
 
 
 class OpenAIResponse(BaseModel):

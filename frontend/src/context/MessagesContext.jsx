@@ -32,7 +32,7 @@ export function MessagesProvider({ children }) {
     fetchMessages();
   }, [token, selectedProjectId]);
 
-  async function createMessage(content) {
+  async function createMessage(content, hybridSearch, graphSearch, reranking) {
     setIsWaitingForStream(true);
     const userMessage = { role: "user", content, id: self.crypto.randomUUID() };
     setMessages((prev) => [...prev, userMessage]);
@@ -44,6 +44,9 @@ export function MessagesProvider({ children }) {
         token,
         content,
         selectedProjectId,
+        hybridSearch,
+        graphSearch,
+        reranking,
       );
 
       const reader = response.body?.getReader();
@@ -103,6 +106,20 @@ export function MessagesProvider({ children }) {
     return;
   }
 
+  async function viewCitation(messageId, citationId) {
+    try {
+      const response = await api.viewCitation(
+        token,
+        selectedProjectId,
+        messageId,
+        citationId,
+      );
+      return response;
+    } catch (err) {
+      throw err;
+    }
+  }
+
   return (
     <MessagesContext.Provider
       value={{
@@ -113,6 +130,7 @@ export function MessagesProvider({ children }) {
         isWaitingForStream,
         refetchMessages: fetchMessages,
         createMessage,
+        viewCitation,
       }}
     >
       {children}

@@ -10,7 +10,7 @@ def reranker(query: str, fused_chunks: list[dict]) -> list[dict]:
         model="rerank-v4.0-pro",
         query=query,
         documents=documents,
-        top_n=5,
+        top_n=3,
     )
 
     reranked = []

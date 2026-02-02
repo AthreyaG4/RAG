@@ -217,3 +217,17 @@ def get_presigned_urls_for_chunk_images(
         urls.append(url)
 
     return urls
+
+
+def get_presigned_url_for_pdf(
+    key: str,
+    expires_in: int = 300,
+):
+    return s3_client.generate_presigned_url(
+        "get_object",
+        Params={
+            "Bucket": S3_BUCKET,
+            "Key": key,
+        },
+        ExpiresIn=expires_in,
+    )

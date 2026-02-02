@@ -51,10 +51,6 @@ export function DocumentUploadStatus({ onAllFilesRemoved }) {
   const hasSuccessfulUploads = uploadedCount > 0;
 
   const [documentToRemove, setDocumentToRemove] = useState(null);
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [hybridSearch, setHybridSearch] = useState(false);
-  const [graphSearch, setGraphSearch] = useState(false);
-  const [reranking, setReranking] = useState(true);
 
   const handleRemoveFile = (doc) => {
     setDocumentToRemove(doc);
@@ -205,75 +201,6 @@ export function DocumentUploadStatus({ onAllFilesRemoved }) {
                 {modelReady ? "Start Processing" : "Waiting..."}
               </Button>
             )}
-          </div>
-
-          <div className="mt-6">
-            <button
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className="text-muted-foreground hover:text-foreground group mx-auto flex items-center gap-2 text-sm transition-colors"
-            >
-              <Settings2 className="h-4 w-4" />
-              <span>Advanced Options</span>
-              <ChevronDown
-                className={cn(
-                  "h-4 w-4 transition-transform duration-200",
-                  showAdvanced && "rotate-180",
-                )}
-              />
-            </button>
-
-            <div
-              className={cn(
-                "overflow-hidden transition-all duration-300 ease-out",
-                showAdvanced
-                  ? "mt-4 max-h-75 opacity-100"
-                  : "max-h-0 opacity-0",
-              )}
-            >
-              <div className="bg-card/50 border-border/50 space-y-4 rounded-xl border p-4 backdrop-blur-sm">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-foreground text-sm font-medium">
-                      Hybrid Search
-                    </p>
-                    <p className="text-muted-foreground text-xs">
-                      Combine semantic and keyword search for better results
-                    </p>
-                  </div>
-                  <Switch
-                    checked={hybridSearch}
-                    onCheckedChange={setHybridSearch}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-foreground text-sm font-medium">
-                      Graph Search
-                    </p>
-                    <p className="text-muted-foreground text-xs">
-                      Enable knowledge graph traversal for connected insights
-                    </p>
-                  </div>
-                  <Switch
-                    checked={graphSearch}
-                    onCheckedChange={setGraphSearch}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-foreground text-sm font-medium">
-                      Reranking
-                    </p>
-                    <p className="text-muted-foreground text-xs">
-                      Apply cross-encoder reranking for improved relevance
-                    </p>
-                  </div>
-                  <Switch checked={reranking} onCheckedChange={setReranking} />
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>

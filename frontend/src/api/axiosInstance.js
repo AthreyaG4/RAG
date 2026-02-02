@@ -4,7 +4,7 @@ export const API_BASE_URL = "http://localhost:5000/api";
 
 const instance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 1000,
+  timeout: 30000,
 });
 
 instance.interceptors.response.use(

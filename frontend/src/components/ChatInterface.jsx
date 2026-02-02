@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, use } from "react";
-import { Send, Bot, User, Loader2 } from "lucide-react";
+import { Send, Bot, User, Loader2, Settings2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { cn } from "../lib/utils";
 import { useMessages } from "../hooks/useMessages";
@@ -7,18 +7,32 @@ import { CitationViewer } from "../components/CitationViewer";
 import { CitationBadge } from "../components/CitationBadge";
 import { useUI } from "../hooks/useUI";
 import { useProjects } from "../hooks/useProjects";
+import { Popover, PopoverTrigger, PopoverContent } from "./ui/popover";
+import { Switch } from "./ui/switch";
 
 export function ChatInterface() {
-  const { messages, isWaitingForStream, isStreaming, createMessage } =
-    useMessages();
+  const {
+    messages,
+    isWaitingForStream,
+    isStreaming,
+    createMessage,
+    viewCitation,
+  } = useMessages();
   const [input, setInput] = useState("");
 
   const [activeCitation, setActiveCitation] = useState(null);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
+  const [hybridSearch, setHybridSearch] = useState(false);
+  const [graphSearch, setGraphSearch] = useState(false);
+  const [reranking, setReranking] = useState(false);
+
   const { selectedProject } = useProjects();
   const { isSidebarOpen } = useUI();
+
+  const [tempUrl, setTempUrl] = useState("");
+  const [isLoadingCitation, setIsLoadingCitation] = useState(false);
 
   const projectName = selectedProject ? selectedProject.name : "Loading...";
 
@@ -35,7 +49,7 @@ export function ChatInterface() {
     if (!input.trim() || isStreaming || isWaitingForStream) return;
 
     setInput("");
-    await createMessage(input.trim());
+    await createMessage(input.trim(), hybridSearch, graphSearch, reranking);
   };
 
   const handleKeyDown = (e) => {
@@ -45,8 +59,18 @@ export function ChatInterface() {
     }
   };
 
-  const handleCitationClick = (citation) => {
+  const handleCitationClick = async (citation) => {
     setActiveCitation(citation);
+    setIsLoadingCitation(true);
+    try {
+      const response = await viewCitation(citation.message_id, citation.id);
+      setTempUrl(response.url);
+    } catch (err) {
+      console.error("Failed to load citation:", err);
+      setActiveCitation(null);
+    } finally {
+      setIsLoadingCitation(false);
+    }
   };
 
   return (
@@ -144,7 +168,72 @@ export function ChatInterface() {
 
       <div className="border-border bg-card/50 border-t p-4 backdrop-blur-sm">
         <form onSubmit={handleSubmit} className="mx-auto max-w-3xl">
-          <div className="relative flex items-end gap-2">
+          <div className="relative flex items-start gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-12 w-12 shrink-0 rounded-xl"
+                >
+                  <Settings2 className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" side="top" className="mb-2 w-72">
+                <div className="space-y-4">
+                  <div className="border-border border-b pb-2">
+                    <p className="text-foreground text-sm font-medium">
+                      Search Options
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-foreground text-sm font-medium">
+                        Hybrid Search
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        Semantic + keyword
+                      </p>
+                    </div>
+                    <Switch
+                      checked={hybridSearch}
+                      onCheckedChange={setHybridSearch}
+                    />
+                  </div>
+
+                  {/* <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-foreground text-sm font-medium">
+                        Graph Search
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        Knowledge graph traversal
+                      </p>
+                    </div>
+                    <Switch
+                      checked={graphSearch}
+                      onCheckedChange={setGraphSearch}
+                    />
+                  </div> */}
+
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-foreground text-sm font-medium">
+                        Reranking
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        Cross-encoder reranking
+                      </p>
+                    </div>
+                    <Switch
+                      checked={reranking}
+                      onCheckedChange={setReranking}
+                    />
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
             <div className="relative flex-1">
               <textarea
                 ref={inputRef}
@@ -180,7 +269,11 @@ export function ChatInterface() {
       {activeCitation && (
         <CitationViewer
           citation={activeCitation}
-          onClose={() => setActiveCitation(null)}
+          onClose={() => {
+            setActiveCitation(null);
+            setTempUrl("");
+          }}
+          url={tempUrl}
         />
       )}
     </div>

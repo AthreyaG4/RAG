@@ -9,19 +9,16 @@ import {
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 
-export function CitationViewer({ citation, onClose }) {
+export function CitationViewer({ citation, onClose, url }) {
   const [zoom, setZoom] = useState(100);
-  const [currentPage, setCurrentPage] = useState(citation.pageNumber);
+  const [currentPage, setCurrentPage] = useState(citation.page_number);
   const [isVisible, setIsVisible] = useState(false);
 
-  // Mock total pages - in real implementation this would come from the PDF
-  const totalPages = 15;
+  const totalPages = citation.total_pages;
 
   useEffect(() => {
-    // Trigger animation on mount
     requestAnimationFrame(() => setIsVisible(true));
 
-    // Handle escape key
     const handleEscape = (e) => {
       if (e.key === "Escape") onClose();
     };
@@ -42,7 +39,6 @@ export function CitationViewer({ citation, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
-      {/* Backdrop */}
       <div
         className={`bg-background/80 absolute inset-0 backdrop-blur-sm transition-opacity duration-200 ${
           isVisible ? "opacity-100" : "opacity-0"
@@ -131,13 +127,13 @@ export function CitationViewer({ citation, onClose }) {
 
         <div className="bg-muted/20 flex-1 overflow-auto p-4">
           <iframe
-            src="https://cdn.codewithmosh.com/image/upload/v1721763853/guides/web-roadmap.pdf#toolbar=0"
+            src={`${url}#page=${currentPage}&toolbar=0`}
             className="h-full w-full border-0"
             title="PDF Viewer"
           />
         </div>
 
-        <div className="border-border bg-accent/30 border-t px-4 py-4">
+        {/* <div className="border-border bg-accent/30 border-t px-4 py-4">
           <div className="flex items-start gap-3">
             <div className="bg-primary h-full min-h-10 w-1 shrink-0 rounded-full" />
             <div className="min-w-0 flex-1">
@@ -149,7 +145,7 @@ export function CitationViewer({ citation, onClose }) {
               </p>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

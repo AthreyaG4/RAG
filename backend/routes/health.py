@@ -2,14 +2,14 @@ from fastapi import APIRouter
 from config import settings
 import requests
 
-router = APIRouter()
+route = APIRouter(prefix="/api/health", tags=["health"])
 
 GPU_SERVICE_URL = settings.GPU_SERVICE_URL
 HF_ACCESS_TOKEN = settings.HF_ACCESS_TOKEN
 TIMEOUT_SECONDS = 2.0
 
 
-@router.get("/api/health", tags=["health"])
+@route.get("/")
 def health_check():
     gpu_status = "healthy"  # Placeholder for GPU service status
     # gpu_status = "unknown"

@@ -130,6 +130,7 @@ class Citation(Base):
     document_name = Column(String, nullable=False)
     document_s3_key = Column(String, nullable=False)
     page_number = Column(Integer, nullable=False)
+    total_pages = Column(Integer, nullable=False)
 
     created_at = Column(DateTime, default=datetime.utcnow)
 

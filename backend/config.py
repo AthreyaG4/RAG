@@ -38,9 +38,6 @@ class Settings(BaseSettings):
     # GPU Service
     GPU_SERVICE_URL: str
 
-    # Chat Service
-    CHAT_SERVICE_URL: str
-
     # OpenAI
     OPENAI_API_KEY: str
 
